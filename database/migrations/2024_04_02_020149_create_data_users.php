@@ -15,6 +15,7 @@ return new class extends Migration
             $table->string('user_id', 10)->primary();
             $table->foreign('user_id')->references('user_id')->on('users');
             $table->string('user_name', 100);
+            $table->string('user_nickname', 50);
             $table->date('user_date_of_birth');
             $table->string('user_address', 100);
             $table->string('user_phone_number', 13);
