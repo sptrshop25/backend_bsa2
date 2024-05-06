@@ -11,14 +11,12 @@ return new class extends Migration
      */
     public function up(): void
     {
-        Schema::create('identities', function (Blueprint $table) {
-            $table->string('user_id', 30)->primary();
+        Schema::create('wishlists', function (Blueprint $table) {
+            $table->integer('wishlist_id')->primary();
+            $table->string('user_id', 10);
             $table->foreign('user_id')->references('user_id')->on('users');
-            $table->enum('identity_type', ['sim', 'ktp', 'card_student']);
-            $table->string('identity_number', 16);
-            $table->string('identity_selfie');
-            $table->string('identity_front_image');
-            $table->enum('identity_status', ['pending', 'accepted', 'rejected']);
+            $table->string('course_id', 20);
+            $table->foreign('course_id')->references('course_id')->on('courses');
             $table->timestamps();
         });
     }
@@ -28,6 +26,6 @@ return new class extends Migration
      */
     public function down(): void
     {
-        Schema::dropIfExists('identities');
+        Schema::dropIfExists('wishlist');
     }
 };
