@@ -13,8 +13,8 @@ return new class extends Migration
     {
         Schema::create('users', function (Blueprint $table) {
             $table->string('user_id', 10)->primary();
-            $table->string('user_email', 100);
-            $table->string('user_password');
+            $table->string('email', 100);
+            $table->string('password');
             $table->string('user_signin_key', 100);
             $table->timestamp('user_access_time')->useCurrent();
             $table->enum('user_role', ['admin', 'user'])->default('user');

@@ -23,6 +23,7 @@ return new class extends Migration
             $table->enum('user_gender', ['Male', 'Female']);
             $table->string('user_focus_area')->nullable();
             $table->string('user_interest_field')->nullable();
+            $table->timestamps();
         });
     }
 

@@ -8,7 +8,7 @@ class AksesAPiController extends Controller
 {
     public function apikey($key)
     {
-        $apikey = "Akses backend briliant skill academy";
+        $apikey = env('API_KEY_BSA');
         $apikey = hash('sha256', $apikey);
         if ($key != "Bearer ". $apikey) {
             return false;

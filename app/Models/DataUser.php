@@ -9,5 +9,4 @@ class DataUser extends Model
 {
     use HasFactory;
     protected $table = 'data_users';
-    
 }
