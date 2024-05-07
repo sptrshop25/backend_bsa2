@@ -11,8 +11,12 @@ return new class extends Migration
      */
     public function up(): void
     {
-        Schema::create('chat_discussions', function (Blueprint $table) {
+        Schema::create('course_sections', function (Blueprint $table) {
             $table->id();
+            $table->string('course_id', 20);
+            $table->foreign('course_id')->references('course_id')->on('courses');
+            $table->string('section_title', 100);
+            $table->string('section_description', 255);
             $table->timestamps();
         });
     }
@@ -22,6 +26,6 @@ return new class extends Migration
      */
     public function down(): void
     {
-        Schema::dropIfExists('chat_discussions');
+        Schema::dropIfExists('course_sections');
     }
 };
