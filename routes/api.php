@@ -28,4 +28,5 @@ Route::middleware(['auth.api'])->group(function () {
     Route::post('register/teacher', [UserController::class, 'register_teacher']);
     Route::post('info_teacher', [UserController::class, 'info_teacher']);  
     Route::put('update_user', [UserController::class, 'update_user']);
+    Route::put('update_teacher', [UserController::class, 'update_teacher']);
 });

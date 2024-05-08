@@ -55,6 +55,7 @@ class LoginController extends Controller
     }
     public function register(Request $request)
     {
+        try {
         $validator = Validator::make($request->all(), [
             'email' => 'required|email|unique:users',
             'password' => 'required',
@@ -93,5 +94,10 @@ class LoginController extends Controller
         return response()->json([
             'message' => 'Success',
         ], 200);
+        } catch (\Exception $e) {
+            return response()->json([
+                'message' => $e->getMessage(),
+            ], 500);
+        }
     }
 }
