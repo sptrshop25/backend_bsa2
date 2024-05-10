@@ -12,7 +12,8 @@ return new class extends Migration
     public function up(): void
     {
         Schema::create('teacher_certificates', function (Blueprint $table) {
-            $table->string('teacher_id', 10)->primary();
+            $table->id();
+            $table->string('teacher_id', 10);
             $table->foreign('teacher_id')->references('teacher_id')->on('teachers');
             $table->string('certificate', 255);
             $table->timestamps();
