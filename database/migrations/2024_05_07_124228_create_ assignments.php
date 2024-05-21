@@ -17,10 +17,10 @@ return new class extends Migration
             $table->foreign('course_id')->references('course_id')->on('courses');
             $table->string('assignment_title', 100);
             $table->string('assignment_description', 255);
-            $table->enum('assignment_type', ['essai', 'pg']);
-            $table->enum('assignment_task_type', ['quiz', 'assignment', 'exam']);
+            // $table->enum('assignment_type', ['essai', 'pg']);
+            // $table->enum('assignment_task_type', ['quiz', 'assignment', 'exam']);
             $table->timestamp('assignment_proccessing_time')->nullable();
-            $table->timestamp('assignment_deadline')->nullable();
+            // $table->timestamp('assignment_deadline')->nullable();
             $table->timestamps();
         });
     }

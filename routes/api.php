@@ -24,12 +24,16 @@ Route::middleware('auth:sanctum')->get('/user', function (Request $request) {
 });
 Route::middleware(['auth.api'])->group(function () {
     Route::post('login', [LoginController::class, 'login']);
-    Route::post('register', [LoginController::class, 'register']);
     Route::post('info_user', [UserController::class, 'info_user']);
     Route::post('info_teacher', [UserController::class, 'info_teacher']);
     Route::post('register/teacher', [UserController::class, 'register_teacher']);
-    Route::post('info_teacher', [UserController::class, 'info_teacher']);  
+    Route::post('info_teacher', [UserController::class, 'info_teacher']);
     Route::put('update_user', [UserController::class, 'update_user']);
     Route::put('update_teacher', [UserController::class, 'update_teacher']);
     Route::post('create_course', [CourseController::class, 'create_course']);
+    Route::post('register', [LoginController::class, 'register']);
+});
+Route::middleware('web')->group(function () {
+    Route::get('oauth/google/redirect', [LoginController::class, 'googleRedirect'])->name('login.google');
+    Route::get('oauth/google/callback', [LoginController::class, 'handleGoogleCallback']);
 });

@@ -17,7 +17,7 @@ class SecretKeyMiddleware
     public function handle(Request $request, Closure $next): Response
     {
         $apikey = new AksesAPiController();
-        $key = $request->header('Proxy-Authorization');
+        $key = $request->header('Authorization');
         if ($apikey->apikey($key) == false) {
             return response()->json(['message' => 'Unauthorized'], 401);
         }
