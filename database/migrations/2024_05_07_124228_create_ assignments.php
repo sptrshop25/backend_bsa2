@@ -19,7 +19,7 @@ return new class extends Migration
             $table->string('assignment_description', 255);
             // $table->enum('assignment_type', ['essai', 'pg']);
             // $table->enum('assignment_task_type', ['quiz', 'assignment', 'exam']);
-            $table->timestamp('assignment_proccessing_time')->nullable();
+            $table->timestamp('assignment_proccessing_time');
             // $table->timestamp('assignment_deadline')->nullable();
             $table->timestamps();
         });

@@ -13,10 +13,14 @@ return new class extends Migration
     {
         Schema::create('course_materials', function (Blueprint $table) {
             $table->string('material_id', 20)->primary();
-            $table->string('material_bab', 5);
+            $table->integer('material_bab', 5);
             $table->string('course_id', 20);
             $table->foreign('course_id')->references('course_id')->on('courses');
             $table->string('material_title', 20);
+            $table->enum('material_file_type', ['pdf', 'video'])->nullable();
+            $table->string('material_file', 255)->nullable();
+            $table->string('material_description', 255);
+            $table->timestamps();
         });
     }
 

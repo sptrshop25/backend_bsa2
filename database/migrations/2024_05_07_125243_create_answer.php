@@ -16,6 +16,7 @@ return new class extends Migration
             $table->foreignId('question_id')->constrained('questions');
             $table->string('answer', 255);
             $table->enum('is_correct', ['0', '1']);
+            $table->string('justification')->nullable();
             $table->timestamps();
         });
     }
