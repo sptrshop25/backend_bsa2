@@ -17,9 +17,10 @@ return new class extends Migration
             $table->foreign('teacher_id')->references('teacher_id')->on('teachers');
             $table->string('course_title', 50);
             $table->foreignId('course_category_id')->constrained('course_sub_categories');
-            $table->string('course_description', 100);
+            $table->text('course_description');
             $table->integer('course_price');
-            $table->integer('course_rating')->nullable();
+            $table->integer('course_price_discount')->nullable();
+            $table->string('course_rating', 5)->nullable();
             $table->enum('course_level', ['beginner', 'intermediate', 'advanced']);
             $table->enum('course_is_free', ['yes', 'no'])->default('no');
             $table->integer('course_duration')->nullable();

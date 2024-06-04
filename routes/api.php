@@ -22,8 +22,9 @@ use Illuminate\Support\Facades\Route;
 Route::middleware('auth:sanctum')->get('/user', function (Request $request) {
     return $request->user();
 });
-Route::middleware(['auth.api'])->group(function () {
-    Route::post('login', [LoginController::class, 'login']);
+Route::post('login', [LoginController::class, 'login']);
+Route::post('register', [LoginController::class, 'register']);
+Route::middleware(['auth.jwt'])->group(function () {
     Route::post('info_user', [UserController::class, 'info_user']);
     Route::post('info_teacher', [UserController::class, 'info_teacher']);
     Route::post('register/teacher', [UserController::class, 'register_teacher']);
@@ -31,7 +32,11 @@ Route::middleware(['auth.api'])->group(function () {
     Route::put('update_user', [UserController::class, 'update_user']);
     Route::put('update_teacher', [UserController::class, 'update_teacher']);
     Route::post('create_course', [CourseController::class, 'create_course']);
-    Route::post('register', [LoginController::class, 'register']);
+    Route::get('cek_token', [LoginController::class, 'cek_token']);
+    Route::get('get_courses', [CourseController::class, 'get_courses']);
+});
+Route::middleware('admin')->group(function () {
+    Route::get('get_user', [UserController::class, 'get_user']);
 });
 Route::middleware('web')->group(function () {
     Route::get('oauth/google/redirect', [LoginController::class, 'googleRedirect'])->name('login.google');

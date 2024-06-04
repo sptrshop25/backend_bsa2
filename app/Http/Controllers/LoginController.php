@@ -42,7 +42,7 @@ class LoginController extends Controller
                 User::where('user_id', $user->user_id)->update(['user_signin_key' => $user_signin_key]);
                 return response()->json([
                     'message' => 'Success',
-                    'Bearer ' => $jwt
+                    'Token' => 'Bearer ' . $jwt,
                 ], 200);
             }
             return response()->json([
@@ -130,7 +130,7 @@ class LoginController extends Controller
                 $jwt = JWT::encode($payload, env('SECRET_KEY_JWT'), 'HS256');
                 return response()->json([
                     'message' => 'Success',
-                    'Bearer ' => $jwt
+                    'Token' => 'Bearer ' . $jwt
                 ], 200);
             } else {
                 $cek_user = User::where('email', $user->email)->first();
@@ -163,7 +163,7 @@ class LoginController extends Controller
                     $jwt = JWT::encode($payload, env('SECRET_KEY_JWT'), 'HS256');
                     return response()->json([
                         'message' => 'Success',
-                        'Bearer ' => $jwt
+                        'Token' => 'Bearer ' . $jwt
                     ]);
                 }
             }
@@ -171,5 +171,12 @@ class LoginController extends Controller
             return redirect()->away('http://127.0.0.1:8000/api/oauth/google/redirect');
             // return $e->getMessage();
         }
+    }
+
+    public function cek_token()
+    {
+        return response()->json([
+            'message' => 'Token is valid',
+        ]);
     }
 }

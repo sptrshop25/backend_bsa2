@@ -12,12 +12,16 @@ use App\Models\TeacherEducationHistory;
 use App\Models\TeacherExperience;
 use Carbon\Carbon;
 use Illuminate\Support\Facades\Validator;
+use Firebase\JWT\JWT;
+use Firebase\JWT\Key;
 
 class UserController extends Controller
 {
     public function info_user(Request $request)
     {
-        $user = User::join('data_users', 'users.user_id', '=', 'data_users.user_id')->where('users.user_id', $request->user_id)->first();
+        $jwt = $request->bearerToken();
+        $decoded = JWT::decode($jwt, new Key(env('SECRET_KEY_JWT'), 'HS256'));
+        $user = User::join('data_users', 'users.user_id', '=', 'data_users.user_id')->where('users.user_id', $decoded->id)->first();
         if (!$user) {
             return response()->json(['message' => 'User not found'], 404);
         }
@@ -36,7 +40,6 @@ class UserController extends Controller
     public function update_user(Request $request)
     {
         $validator = Validator::make($request->all(), [
-            'user_id' => 'required',
             'user_name' => 'required',
             'user_phone' => 'required',
             'user_nickname' => 'required',
@@ -48,12 +51,13 @@ class UserController extends Controller
         if ($validator->fails()) {
             return response()->json($validator->errors(), 400);
         }
-        $user = User::where('user_id', $request->user_id);
+        $user_id = $this->user_id();
+        $user = User::where('user_id', $user_id);
         $cek_user = $user->first();
         if (!$cek_user) {
             return response()->json(['message' => 'User not found'], 404);
         }
-        $data_user = DataUser::where('user_id', $request->user_id);
+        $data_user = DataUser::where('user_id', $user_id);
         $dataUserData = [
             'user_name' => $request->user_name,
             'user_phone_number' => $request->user_phone,
@@ -75,7 +79,6 @@ class UserController extends Controller
     {
         try {
             $validator = Validator::make($request->all(), [
-                'user_id' => 'required',
                 'expertise_field' => 'required',
                 'instructional_skill' => 'required',
                 'link_portfolio' => 'required',
@@ -89,8 +92,9 @@ class UserController extends Controller
             if ($validator->fails()) {
                 return response()->json($validator->errors(), 400);
             }
+            $user_id = $this->user_id();
             Teacher::insert([
-                'teacher_id' => $request->user_id,
+                'teacher_id' => $user_id,
                 'teacher_description' => $request->description,
                 'teacher_expertise_field' => $request->expertise_field,
                 'teacher_instructional_skill' => $request->instructional_skill,
@@ -101,14 +105,14 @@ class UserController extends Controller
             ]);
             if ($request->has('certificate')) {
                 TeacherCertificate::insert([
-                    'teacher_id' => $request->user_id,
+                    'teacher_id' => $user_id,
                     'certificate' => $request->certificate,
                     'created_at' => Carbon::now()->toDateTimeString(),
                 ]);
             }
             if ($request->has('is_still_working')) {
                 TeacherExperience::insert([
-                    'teacher_id' => $request->user_id,
+                    'teacher_id' => $user_id,
                     'name' => $request->name,
                     'start_date' => $request->start_date,
                     'end_date' => $request->end_date,
@@ -119,14 +123,14 @@ class UserController extends Controller
                 ]);
             }
             TeacherEducationHistory::insert([
-                'teacher_id' => $request->user_id,
+                'teacher_id' => $user_id,
                 'teacher_degree_title' => $request->teacher_degree_title,
                 'teacher_university' => $request->teacher_university,
                 'teacher_major' => $request->teacher_major,
                 'teacher_graduation_year' => $request->teacher_graduation_year,
                 'created_at' => Carbon::now()->toDateTimeString(),
             ]);
-            User::where('user_id', $request->user_id)->update(['user_teacher' => 'yes']);
+            User::where('user_id', $user_id)->update(['user_teacher' => 'yes']);
             return response()->json(['message' => 'Success'], 200);
         } catch (\Exception $e) {
             return response()->json(['message' => $e->getMessage()], 500);
@@ -136,7 +140,6 @@ class UserController extends Controller
     {
         try {
             $validator = Validator::make($request->all(), [
-                'user_id' => 'required',
                 'expertise_field' => 'required',
                 'instructional_skill' => 'required',
                 'link_portfolio' => 'required',
@@ -150,7 +153,8 @@ class UserController extends Controller
             if ($validator->fails()) {
                 return response()->json($validator->errors(), 400);
             }
-            Teacher::where('teacher_id', $request->user_id)->update([
+            $user_id = $this->user_id();
+            Teacher::where('teacher_id', $user_id)->update([
                 'teacher_description' => $request->description,
                 'teacher_expertise_field' => $request->expertise_field,
                 'teacher_instructional_skill' => $request->instructional_skill,
@@ -158,12 +162,12 @@ class UserController extends Controller
                 'teacher_term_and_condition' => $request->term_and_condition,
             ]);
             if ($request->has('certificate')) {
-                TeacherCertificate::where('teacher_id', $request->user_id)->update([
+                TeacherCertificate::where('teacher_id', $user_id)->update([
                     'certificate' => $request->certificate,
                 ]);
             }
             if ($request->has('is_still_working')) {
-                TeacherExperience::where('teacher_id', $request->user_id)->update([
+                TeacherExperience::where('teacher_id', $user_id)->update([
                     'name' => $request->name,
                     'start_date' => $request->start_date,
                     'end_date' => $request->end_date,
@@ -172,7 +176,7 @@ class UserController extends Controller
                     'is_still_working' => $request->is_still_working,
                 ]);
             }
-            TeacherEducationHistory::where('teacher_id', $request->user_id)->update([
+            TeacherEducationHistory::where('teacher_id', $user_id)->update([
                 'teacher_degree_title' => $request->teacher_degree_title,
                 'teacher_university' => $request->teacher_university,
                 'teacher_major' => $request->teacher_major,
@@ -182,5 +186,17 @@ class UserController extends Controller
         } catch (\Exception $e) {
             return response()->json(['message' => $e->getMessage()], 500);
         }
+    }
+    
+    public function get_user()
+    {
+        $user = User::join('data_users', 'users.user_id', '=', 'data_users.user_id')->get();
+        return response()->json($user);
+    }
+
+    private function user_id(){
+        $jwt = request()->bearerToken();
+        $decoded = JWT::decode($jwt, new Key(env('SECRET_KEY_JWT'), 'HS256'));
+        return $decoded->id;
     }
 }

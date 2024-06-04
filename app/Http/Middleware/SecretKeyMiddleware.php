@@ -2,10 +2,11 @@
 
 namespace App\Http\Middleware;
 
-use App\Http\Controllers\AksesAPiController;
 use Closure;
 use Illuminate\Http\Request;
 use Symfony\Component\HttpFoundation\Response;
+use Firebase\JWT\JWT;
+use Firebase\JWT\Key;
 
 class SecretKeyMiddleware
 {
@@ -16,11 +17,18 @@ class SecretKeyMiddleware
      */
     public function handle(Request $request, Closure $next): Response
     {
-        $apikey = new AksesAPiController();
-        $key = $request->header('Authorization');
-        if ($apikey->apikey($key) == false) {
+        $jwt = $request->bearerToken();
+
+        if (!$jwt) {
             return response()->json(['message' => 'Unauthorized'], 401);
         }
+
+        try {
+            $decoded = JWT::decode($jwt, new Key(env('SECRET_KEY_JWT'), 'HS256'));
+        } catch (\Exception $e) {
+            return response()->json(['message' => $e->getMessage()], 401);
+        }
+
         return $next($request);
     }
 }
