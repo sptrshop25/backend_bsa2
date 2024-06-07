@@ -2,6 +2,7 @@
 
 use App\Http\Controllers\CourseController;
 use App\Http\Controllers\LoginController;
+use App\Http\Controllers\SearchController;
 use App\Http\Controllers\UserController;
 use App\Http\Middleware\CheckRequestMethod;
 use Illuminate\Http\Request;
@@ -34,6 +35,8 @@ Route::middleware(['auth.jwt'])->group(function () {
     Route::post('create_course', [CourseController::class, 'create_course']);
     Route::get('cek_token', [LoginController::class, 'cek_token']);
     Route::get('get_courses', [CourseController::class, 'get_courses']);
+    Route::post('rating_course', [CourseController::class, 'rating_course']);
+    Route::post('search_course', [SearchController::class, 'search_course']);
 });
 Route::middleware('admin')->group(function () {
     Route::get('get_user', [UserController::class, 'get_user']);

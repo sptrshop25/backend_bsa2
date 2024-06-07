@@ -6,9 +6,11 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Validator;
 use App\Models\Course;
 use App\Models\CourseCategory;
+use App\Models\CourseRating;
 use Carbon\Carbon;
 use Firebase\JWT\JWT;
 use Firebase\JWT\Key;
+use Illuminate\Support\Facades\DB;
 
 class CourseController extends Controller
 {
@@ -30,7 +32,13 @@ class CourseController extends Controller
         $teacher_id = JWT::decode($jwt, new Key(env('SECRET_KEY_JWT'), 'HS256'))->id;
         // return $teacher_id;
         try {
-            $category = CourseCategory::where('id', $request->course_category)->first()->category_name;
+            $category_id = DB::table('course_sub_categories')->where('id', $request->course_category)->get();
+            foreach ($category_id as $cat_id) {
+                $category_id = $cat_id->course_category_id;
+            }
+            // return response()->json($category_id);
+            $category = CourseCategory::where('id', $category_id)->first()->category_name;
+            // return response()->json($category);
             $imagePath = $request->file('course_image')->store('course_image', 'public');
             $course = new Course($validator->validated());
             $course->course_id = $this->generateCourseCode($category);
@@ -57,9 +65,10 @@ class CourseController extends Controller
         $latestCourse = Course::where('course_id', 'like', $prefix . '%')
             ->orderBy('created_at', 'desc')
             ->first();
-
+        $randomNum = substr(str_shuffle("0123456789"), 0, 4);
         $number = $latestCourse ? intval(substr($latestCourse->course_id, -4)) + 1 : 1;
-        return $prefix . str_pad($number, 4, '0', STR_PAD_LEFT);
+        // return $prefix . str_pad($number, 4, '0', STR_PAD_LEFT);
+        return $prefix . $randomNum;
     }
 
     private function generateCategoryPrefix($category)
@@ -76,7 +85,38 @@ class CourseController extends Controller
 
     public function get_courses()
     {
-        $courses = Course::join('course_categories', 'courses.course_category_id', '=', 'course_categories.id')->join('data_users', 'courses.teacher_id', '=', 'data_users.user_id')->get();
+        $courses = Course::join('course_sub_categories', 'courses.course_category_id', '=', 'course_sub_categories.id')->join('course_categories', 'course_sub_categories.course_category_id', '=', 'course_categories.id')->join('data_users', 'courses.teacher_id', '=', 'data_users.user_id')->get();
         return response()->json($courses);
+    }
+
+    public function rating_course(Request $request)
+    {
+        try {
+            $validator = Validator::make($request->all(), [
+                'course_id' => 'required',
+                'rating' => 'required',
+                'comment' => 'required',
+            ]);
+            if ($validator->fails()) {
+                return response()->json($validator->errors(), 400);
+            }
+            $user_id = JWT::decode($request->bearerToken(), new Key(env('SECRET_KEY_JWT'), 'HS256'))->id;
+            $course = Course::where('course_id', $request->course_id)->first();
+            if (!$course) {
+                return response()->json(['message' => 'Course not found'], 404);
+            }
+            $courseRating = new CourseRating();
+            $courseRating->user_id = $user_id;
+            $courseRating->course_id = $request->course_id;
+            $courseRating->rating = $request->rating;
+            $courseRating->comment = $request->comment;
+            $courseRating->updated_at = Carbon::now()->toDateTimeString();
+            $courseRating->save();
+            $totalRating = round(CourseRating::where('course_id', $request->course_id)->sum('rating') / CourseRating::where('course_id', $request->course_id)->count(), 1);
+            Course::where('course_id', $request->course_id)->update(['course_rating' => $totalRating]);
+            return response()->json(['message' => 'Course rating updated successfully'], 200);
+        } catch (\Exception $e) {
+            return response()->json(['message' => $e->getMessage()], 500);
+        }
     }
 }

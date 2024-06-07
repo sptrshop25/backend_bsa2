@@ -35,7 +35,7 @@ class LoginController extends Controller
                     'email' => $user->email,
                     'role' => $user->user_role,
                     'iat' => now()->timestamp,
-                    'exp' => now()->timestamp + (60 * 60 * 24),
+                    // 'exp' => now()->timestamp + (60 * 60 * 24),
                 ];
                 $jwt = JWT::encode($payload, env('SECRET_KEY_JWT'), 'HS256');
                 $user_signin_key = Str::random(30);
@@ -125,7 +125,7 @@ class LoginController extends Controller
                     'email' => $cek_user->email,
                     'role' => $cek_user->user_role,
                     'iat' => now()->timestamp,
-                    'exp' => now()->timestamp + (60 * 60 * 24),
+                    // 'exp' => now()->timestamp + (60 * 60 * 24),
                 ];
                 $jwt = JWT::encode($payload, env('SECRET_KEY_JWT'), 'HS256');
                 return response()->json([
@@ -158,7 +158,7 @@ class LoginController extends Controller
                         'email' => $user->email,
                         'role' => 'user',
                         'iat' => now()->timestamp,
-                        'exp' => now()->timestamp + (60 * 60 * 24),
+                        // 'exp' => now()->timestamp + (60 * 60 * 24),
                     ];
                     $jwt = JWT::encode($payload, env('SECRET_KEY_JWT'), 'HS256');
                     return response()->json([
