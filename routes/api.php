@@ -25,6 +25,7 @@ Route::middleware('auth:sanctum')->get('/user', function (Request $request) {
 });
 Route::post('login', [LoginController::class, 'login']);
 Route::post('register', [LoginController::class, 'register']);
+Route::post('resend/email', [LoginController::class, 'resend_verification_email']);
 Route::middleware(['auth.jwt'])->group(function () {
     Route::post('info_user', [UserController::class, 'info_user']);
     Route::post('info_teacher', [UserController::class, 'info_teacher']);

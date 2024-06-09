@@ -13,6 +13,9 @@ use Illuminate\Support\Facades\Validator;
 use Firebase\JWT\JWT;
 use Firebase\JWT\Key;
 use Laravel\Socialite\Facades\Socialite;
+use Illuminate\Support\Facades\Mail;
+use App\Mail\VerificationEmail;
+use App\Mail\TestEmail;
 
 class LoginController extends Controller
 {
@@ -29,6 +32,11 @@ class LoginController extends Controller
             $credential = $validator->validated();
             if (Auth::attempt($credential)) {
                 $user = Auth::user();
+                if ($user->user_email_verified == 'no') {
+                    return response()->json([
+                        'message' => 'Email not verified',
+                    ], 401);
+                }
                 $payload = [
                     'iss' => 'bsa-api',
                     'id' => $user->user_id,
@@ -81,23 +89,24 @@ class LoginController extends Controller
                 ], 400);
             }
             $user_id = "bsa-" . Str::random(6);
-            User::insert([
+            User::create([
                 'user_id' => $user_id,
                 'email' => $request->email,
                 'password' => bcrypt($request->password),
                 'user_signin_key' => Str::random(30),
-                'user_role' => 'user',
-                'user_status' => 'active',
-                'user_teacher' => 'no',
                 'created_at' => Carbon::now()->toDateTimeString(),
             ]);
-            DataUser::insert([
+            DataUser::create([
                 'user_id' => $user_id,
                 'user_name' => $request->fullname,
                 'user_nickname' => $request->nickname,
                 'user_gender' => $request->gender,
                 'user_phone_number' => $request->phone,
             ]);
+            $data_user = DataUser::join('users', 'users.user_id', '=', 'data_users.user_id')->where('users.user_id', $user_id)->first();
+            $verificationToken = $this->generateVerificationToken();
+            User::where('user_id', $user_id)->update(['verification_token' => $verificationToken]);
+            Mail::to($request->email)->send(new VerificationEmail($data_user, $verificationToken));
             return response()->json([
                 'message' => 'Success',
             ], 200);
@@ -106,6 +115,11 @@ class LoginController extends Controller
                 'message' => $e->getMessage(),
             ], 500);
         }
+    }
+
+    protected function generateVerificationToken()
+    {
+        return Str::random(60);
     }
 
     public function googleRedirect()
@@ -179,4 +193,49 @@ class LoginController extends Controller
             'message' => 'Token is valid',
         ]);
     }
+
+    public function verifyEmail($token)
+    {
+        $user = User::where('verification_token', $token)->first();
+        if ($user) {
+            if ($user->verification_token === $token) {
+                User::where('email', $user->email)->update(['verification_token' => null, 'user_email_verified' => 'yes']);
+                // return response()->json([
+                //     'message' => 'Email verified',
+                // ]);
+                return view('redirect');
+            } else {
+                return response()->json([
+                    'message' => 'Invalid verification token',
+                ], 400);
+            }
+        } else {
+            return response()->json([
+                'message' => 'invalid url or expired',
+            ], 400);
+        }
+    }
+
+    public function resend_verification_email(Request $request)
+    {
+        try {
+            $data_user = DataUser::join('users', 'users.user_id', '=', 'data_users.user_id')->where('users.email', $request->email)->first();
+            $verificationToken = $this->generateVerificationToken();
+            User::where('user_id', $data_user->user_id)->update(['verification_token' => $verificationToken]);
+            Mail::to($request->email)->send(new VerificationEmail($data_user, $verificationToken));
+            return response()->json([
+                'message' => 'Success',
+            ], 200);
+        } catch (\Exception $e) {
+            return response()->json([
+                'message' => $e->getMessage(),
+            ], 500);
+        }
+    }
+    // public function logout(Request $request)
+    // {
+    //     $request->user()->currentAccessToken()->delete();
+    //     return response()->json([
+    //         'message' => 'Success',
+    // }
 }

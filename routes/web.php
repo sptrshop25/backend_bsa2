@@ -1,5 +1,6 @@
 <?php
 
+use App\Http\Controllers\LoginController;
 use Illuminate\Support\Facades\Route;
 
 /*
@@ -16,3 +17,5 @@ use Illuminate\Support\Facades\Route;
 Route::get('/', function () {
     return view('welcome');
 });
+Route::get('test_email', [LoginController::class, 'test_email']);
+Route::get('/verify-email/{token}',[LoginController::class, 'verifyEmail'])->name('verify.email');
