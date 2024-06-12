@@ -14,7 +14,7 @@ return new class extends Migration
         Schema::create('withdraw_historys', function (Blueprint $table) {
             $table->id();
             $table->string('teacher_id', 10);
-            $table->foreign('teacher_id')->references('teacher_id')->on('teachers');
+            $table->foreign('teacher_id')->references('teacher_id')->on('teachers')->onDelete('cascade')->onUpdate('cascade');
             $table->integer('amount_withdraw');
             $table->integer('fee_withdraw');
             $table->integer('previous_balance');

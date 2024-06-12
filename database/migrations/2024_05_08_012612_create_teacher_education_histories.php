@@ -14,7 +14,7 @@ return new class extends Migration
         Schema::create('teacher_education_histories', function (Blueprint $table) {
             $table->id();
             $table->string('teacher_id', 10);
-            $table->foreign('teacher_id')->references('teacher_id')->on('teachers');
+            $table->foreign('teacher_id')->references('teacher_id')->on('teachers')->onDelete('cascade')->onUpdate('cascade');
             $table->string('teacher_degree_title', 100);
             $table->string('teacher_university', 255);
             $table->string('teacher_major', 100);

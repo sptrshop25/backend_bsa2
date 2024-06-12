@@ -14,7 +14,7 @@ return new class extends Migration
         Schema::create('teacher_experiences', function (Blueprint $table) {
             $table->id();
             $table->string('teacher_id', 10);
-            $table->foreign('teacher_id')->references('teacher_id')->on('teachers');
+            $table->foreign('teacher_id')->references('teacher_id')->on('teachers')->onDelete('cascade')->onUpdate('cascade');
             $table->string('name');
             $table->date('start_date');
             $table->date('end_date')->nullable();

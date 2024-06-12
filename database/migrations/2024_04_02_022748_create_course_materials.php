@@ -15,7 +15,7 @@ return new class extends Migration
             $table->string('material_id', 20)->primary();
             $table->integer('material_bab');
             $table->string('course_id', 20);
-            $table->foreign('course_id')->references('course_id')->on('courses');
+            $table->foreign('course_id')->references('course_id')->on('courses')->onDelete('cascade')->onUpdate('cascade');
             $table->string('material_title', 20);
             $table->enum('material_file_type', ['pdf', 'video'])->nullable();
             $table->string('material_file', 255)->nullable();

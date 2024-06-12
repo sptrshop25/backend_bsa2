@@ -50,6 +50,7 @@ class CourseController extends Controller
             $course->course_duration = $request->course_duration;
             $course->course_level = $request->course_level;
             $course->course_is_free = $request->course_is_free;
+            $course->course_price_discount = $request->course_price_discount ?? null;
             $course->course_image = env('APP_URL') . '/storage/' . $imagePath;
             $course->created_at = Carbon::now()->toDateTimeString();
             $course->save();
@@ -85,10 +86,16 @@ class CourseController extends Controller
 
     public function get_courses()
     {
-        $courses = Course::join('course_sub_categories', 'courses.course_category_id', '=', 'course_sub_categories.id')->join('course_categories', 'course_sub_categories.course_category_id', '=', 'course_categories.id')->join('data_users', 'courses.teacher_id', '=', 'data_users.user_id')->get();
+        $courses = Course::with(['subCategory.category', 'teacher'])->get();
         return response()->json($courses);
     }
 
+    public function get_my_courses(Request $request)
+    {
+        $user_id = JWT::decode($request->bearerToken(), new Key(env('SECRET_KEY_JWT'), 'HS256'))->id;
+        $courses = Course::with(['subCategory.category', 'teacher'])->where('teacher_id', $user_id)->get();
+        return response()->json($courses);
+    }
     public function rating_course(Request $request)
     {
         try {

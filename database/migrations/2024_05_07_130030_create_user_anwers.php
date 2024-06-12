@@ -14,7 +14,7 @@ return new class extends Migration
         Schema::create('user_anwers', function (Blueprint $table) {
             $table->id();
             $table->string('user_id', 10);
-            $table->foreign('user_id')->references('user_id')->on('users');
+            $table->foreign('user_id')->references('user_id')->on('users')->onDelete('cascade')->onUpdate('cascade');
             $table->foreignId('question_id')->constrained('questions');
             $table->string('answer');
             $table->enum('is_correct', ['0', '1'])->nullable();

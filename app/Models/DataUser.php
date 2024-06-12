@@ -8,7 +8,7 @@ use Illuminate\Database\Eloquent\Model;
 class DataUser extends Model
 {
     use HasFactory;
-    protected $table = 'data_users';
+    // protected $primaryKey = 'user_id';
     protected $fillable = [
         'user_id',
         'user_name',

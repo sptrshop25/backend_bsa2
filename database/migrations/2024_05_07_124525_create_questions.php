@@ -13,7 +13,7 @@ return new class extends Migration
     {
         Schema::create('questions', function (Blueprint $table) {
             $table->id();
-            $table->foreignId('assignment_id')->constrained('assignments');
+            $table->foreignId('assignment_id')->constrained('assignments')->onDelete('cascade')->onUpdate('cascade');
             $table->string('question_image', 255)->nullable();
             $table->string('question', 100);
             $table->integer('point');

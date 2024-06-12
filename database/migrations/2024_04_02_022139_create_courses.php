@@ -14,7 +14,7 @@ return new class extends Migration
         Schema::create('courses', function (Blueprint $table) {
             $table->string('course_id', 20)->primary();
             $table->string('teacher_id', 20);
-            $table->foreign('teacher_id')->references('teacher_id')->on('teachers');
+            $table->foreign('teacher_id')->references('teacher_id')->on('teachers')->onDelete('cascade')->onUpdate('cascade');
             $table->string('course_title', 50);
             $table->foreignId('course_category_id')->constrained('course_sub_categories');
             $table->text('course_description');

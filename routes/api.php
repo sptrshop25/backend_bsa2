@@ -23,7 +23,7 @@ use Illuminate\Support\Facades\Route;
 Route::middleware('auth:sanctum')->get('/user', function (Request $request) {
     return $request->user();
 });
-Route::post('login', [LoginController::class, 'login']);
+Route::post('login', [LoginController::class, 'login'])->middleware('throttle:5,1');
 Route::post('register', [LoginController::class, 'register']);
 Route::post('resend/email', [LoginController::class, 'resend_verification_email']);
 Route::middleware(['auth.jwt'])->group(function () {
@@ -38,6 +38,7 @@ Route::middleware(['auth.jwt'])->group(function () {
     Route::get('get_courses', [CourseController::class, 'get_courses']);
     Route::post('rating_course', [CourseController::class, 'rating_course']);
     Route::post('search_course', [SearchController::class, 'search_course']);
+    Route::post('get_my_courses', [CourseController::class, 'get_my_courses']);
 });
 Route::middleware('admin')->group(function () {
     Route::get('get_user', [UserController::class, 'get_user']);

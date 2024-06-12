@@ -14,7 +14,7 @@ return new class extends Migration
         Schema::create('search_historys', function (Blueprint $table) {
             $table->id();
             $table->string('user_id');
-            $table->foreign('user_id')->references('user_id')->on('users');
+            $table->foreign('user_id')->references('user_id')->on('users')->onDelete('cascade')->onUpdate('cascade');
             $table->string('search_query');
             $table->integer('search_count')->nullable();
             $table->timestamps();

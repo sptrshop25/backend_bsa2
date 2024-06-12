@@ -196,23 +196,17 @@ class LoginController extends Controller
 
     public function verifyEmail($token)
     {
-        $user = User::where('verification_token', $token)->first();
+        $user = User::join('data_users', 'users.user_id', '=', 'data_users.user_id')->where('verification_token', $token)->first();
+        // dd($user);
         if ($user) {
             if ($user->verification_token === $token) {
                 User::where('email', $user->email)->update(['verification_token' => null, 'user_email_verified' => 'yes']);
-                // return response()->json([
-                //     'message' => 'Email verified',
-                // ]);
-                return view('redirect');
+                return view('redirect')->with('user', $user);
             } else {
-                return response()->json([
-                    'message' => 'Invalid verification token',
-                ], 400);
+                abort(404);
             }
         } else {
-            return response()->json([
-                'message' => 'invalid url or expired',
-            ], 400);
+            abort(403);
         }
     }
 

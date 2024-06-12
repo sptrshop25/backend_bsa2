@@ -13,7 +13,7 @@ return new class extends Migration
     {
         Schema::create('identities', function (Blueprint $table) {
             $table->string('user_id', 30)->primary();
-            $table->foreign('user_id')->references('user_id')->on('users');
+            $table->foreign('user_id')->references('user_id')->on('users')->onDelete('cascade')->onUpdate('cascade');
             $table->enum('identity_type', ['sim', 'ktp', 'card_student']);
             $table->string('identity_number', 16);
             $table->string('identity_selfie');

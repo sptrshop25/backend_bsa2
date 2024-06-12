@@ -13,11 +13,11 @@ return new class extends Migration
     {
         Schema::create('group_messages', function (Blueprint $table) {
             $table->id();
-            $table->foreignId('group_id')->constrained('groups');
+            $table->foreignId('group_id')->constrained('groups')->onDelete('cascade')->onUpdate('cascade');
             $table->string('sender_id', 10);
-            $table->foreign('sender_id')->references('user_id')->on('users');
+            $table->foreign('sender_id')->references('user_id')->on('users')->onDelete('cascade')->onUpdate('cascade');
             $table->string('receiver_id', 10);
-            $table->foreign('receiver_id')->references('user_id')->on('users');
+            $table->foreign('receiver_id')->references('user_id')->on('users')->onDelete('cascade')->onUpdate('cascade');
             $table->string('message', 255);
             $table->string('attachment', 255)->nullable();
             $table->integer('reply_to')->nullable();
