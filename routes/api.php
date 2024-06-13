@@ -26,6 +26,8 @@ Route::middleware('auth:sanctum')->get('/user', function (Request $request) {
 Route::post('login', [LoginController::class, 'login'])->middleware('throttle:5,1');
 Route::post('register', [LoginController::class, 'register']);
 Route::post('resend/email', [LoginController::class, 'resend_verification_email']);
+Route::post('request/reset-password', [LoginController::class, 'otp']);
+Route::post('verify_otp', [LoginController::class, 'verify_otp']);
 Route::middleware(['auth.jwt'])->group(function () {
     Route::post('info_user', [UserController::class, 'info_user']);
     Route::post('info_teacher', [UserController::class, 'info_teacher']);

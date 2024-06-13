@@ -21,6 +21,7 @@ return new class extends Migration
             $table->enum('user_status', ['active', 'inactive'])->default('active');
             $table->enum('user_teacher', ['yes', 'no'])->default('no');
             $table->string('verification_token', 100)->nullable();
+            $table->string('otp', 10)->nullable();
             $table->enum('user_login_google', ['yes', 'no'])->default('no');
             $table->enum('user_email_verified', ['yes', 'no'])->default('no');
             $table->timestamps();

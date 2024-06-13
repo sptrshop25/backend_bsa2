@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Mail\OtpMail;
 use Illuminate\Http\Request;
 use App\Models\User;
 use App\Models\DataUser;
@@ -232,4 +233,50 @@ class LoginController extends Controller
     //     return response()->json([
     //         'message' => 'Success',
     // }
+
+    public function otp(Request $request)
+    {
+        $validator = Validator::make($request->all(), [
+            'email' => 'required|email',
+        ]);
+        if ($validator->fails()) {
+            return response()->json($validator->errors(), 400);
+        }
+        $data_user = DataUser::join('users', 'users.user_id', '=', 'data_users.user_id')->where('users.email', $request->email)->first();
+        if ($data_user) {
+            $otp = rand(100000, 999999);
+            User::where('user_id', $data_user->user_id)->update(['otp' => $otp]);
+            Mail::to($request->email)->send(new OtpMail($data_user, $otp));
+            return response()->json([
+                'message' => 'Success',
+            ], 200);
+        } else {
+            return response()->json([
+                'message' => 'Email not found',
+            ], 400);
+        }
+    }
+
+    public function verify_otp(Request $request)
+    {
+        $validator = Validator::make($request->all(), [
+            'email' => 'required|email',
+            'otp' => 'required',
+        ]);
+        if ($validator->fails()) {
+            return response()->json($validator->errors(), 400);
+        }
+        $data_user = DataUser::join('users', 'users.user_id', '=', 'data_users.user_id')->where('users.email', $request->email)->first();
+        $otp = User::where('user_id', $data_user->user_id)->first();
+        if ($otp->otp == $request->otp) {
+            User::where('user_id', $data_user->user_id)->update(['otp' => null]);
+            return response()->json([
+                'message' => 'Success',
+            ], 200);
+        } else {
+            return response()->json([
+                'message' => 'Wrong otp',
+            ], 400);
+        }
+    }
 }
