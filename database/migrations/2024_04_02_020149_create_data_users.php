@@ -20,10 +20,11 @@ return new class extends Migration
             $table->string('user_address', 100)->nullable();
             $table->string('user_phone_number', 13);
             $table->string('user_profile_picture')->nullable();
-            $table->enum('user_gender', ['Male', 'Female']);
+            $table->enum('user_gender', ['Male', 'Female'])->default('Male');
             $table->string('user_focus_area')->nullable();
             $table->string('user_interest_field')->nullable();
             $table->timestamps();
+            $table->softDeletes();
         });
     }
 

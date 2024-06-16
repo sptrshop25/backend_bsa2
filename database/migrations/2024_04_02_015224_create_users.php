@@ -25,6 +25,7 @@ return new class extends Migration
             $table->enum('user_login_google', ['yes', 'no'])->default('no');
             $table->enum('user_email_verified', ['yes', 'no'])->default('no');
             $table->timestamps();
+            $table->softDeletes();
         });
     }
 

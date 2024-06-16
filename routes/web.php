@@ -19,6 +19,6 @@ Route::get('/', function () {
 });
 Route::get('test_email', [LoginController::class, 'test_email']);
 Route::get('/verify-email/{token}',[LoginController::class, 'verifyEmail'])->name('verify.email');
-// Route::get('test', function () {
-//     return view('email_reset_password');
-// });
+Route::get('test', function () {
+    return view('info_reset_password');
+});

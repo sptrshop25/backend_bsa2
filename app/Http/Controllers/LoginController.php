@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Mail\InfoResetPassword;
 use App\Mail\OtpMail;
 use Illuminate\Http\Request;
 use App\Models\User;
@@ -104,7 +105,60 @@ class LoginController extends Controller
                 'user_gender' => $request->gender,
                 'user_phone_number' => $request->phone,
             ]);
-            $data_user = DataUser::join('users', 'users.user_id', '=', 'data_users.user_id')->where('users.user_id', $user_id)->first();
+            $data_user = User::with('dataUser')->where('user_id', $user_id)->first();
+            $verificationToken = $this->generateVerificationToken();
+            User::where('user_id', $user_id)->update(['verification_token' => $verificationToken]);
+            Mail::to($request->email)->send(new VerificationEmail($data_user, $verificationToken));
+            return response()->json([
+                'message' => 'Success',
+            ], 200);
+        } catch (\Exception $e) {
+            return response()->json([
+                'message' => $e->getMessage(),
+            ], 500);
+        }
+    }
+
+    public function add_user(Request $request)
+    {
+        try {
+            $validator = Validator::make($request->all(), [
+                'email' => 'required|email',
+                'password' => 'required',
+                'fullname' => 'required',
+                'nickname' => 'required',
+                'phone' => 'required',
+            ]);
+            if ($validator->fails()) {
+                return response()->json($validator->errors(), 400);
+            }
+            $cek_nickname = DataUser::where('user_nickname', $request->nickname)->first();
+            if ($cek_nickname) {
+                return response()->json([
+                    'message' => 'Nickname already exist'
+                ], 400);
+            }
+            $cek_phone = DataUser::where('user_phone_number', $request->phone)->first();
+            if ($cek_phone) {
+                return response()->json([
+                    'message' => 'Phone already exist'
+                ], 400);
+            }
+            $user_id = "bsa-" . Str::random(6);
+            User::create([
+                'user_id' => $user_id,
+                'email' => $request->email,
+                'password' => bcrypt($request->password),
+                'user_signin_key' => Str::random(30),
+                'created_at' => Carbon::now()->toDateTimeString(),
+            ]);
+            DataUser::create([
+                'user_id' => $user_id,
+                'user_name' => $request->fullname,
+                'user_nickname' => $request->nickname,
+                'user_phone_number' => $request->phone,
+            ]);
+            $data_user = User::with('dataUser')->where('user_id', $user_id)->first();
             $verificationToken = $this->generateVerificationToken();
             User::where('user_id', $user_id)->update(['verification_token' => $verificationToken]);
             Mail::to($request->email)->send(new VerificationEmail($data_user, $verificationToken));
@@ -198,7 +252,6 @@ class LoginController extends Controller
     public function verifyEmail($token)
     {
         $user = User::join('data_users', 'users.user_id', '=', 'data_users.user_id')->where('verification_token', $token)->first();
-        // dd($user);
         if ($user) {
             if ($user->verification_token === $token) {
                 User::where('email', $user->email)->update(['verification_token' => null, 'user_email_verified' => 'yes']);
@@ -227,12 +280,6 @@ class LoginController extends Controller
             ], 500);
         }
     }
-    // public function logout(Request $request)
-    // {
-    //     $request->user()->currentAccessToken()->delete();
-    //     return response()->json([
-    //         'message' => 'Success',
-    // }
 
     public function otp(Request $request)
     {
@@ -259,24 +306,62 @@ class LoginController extends Controller
 
     public function verify_otp(Request $request)
     {
-        $validator = Validator::make($request->all(), [
-            'email' => 'required|email',
-            'otp' => 'required',
-        ]);
-        if ($validator->fails()) {
-            return response()->json($validator->errors(), 400);
+        try {
+            $validator = Validator::make($request->all(), [
+                'email' => 'required|email',
+                'otp' => 'required',
+            ]);
+            if ($validator->fails()) {
+                return response()->json($validator->errors(), 400);
+            }
+            $data_user = DataUser::join('users', 'users.user_id', '=', 'data_users.user_id')->where('users.email', $request->email)->first();
+            if ($data_user) {
+                $otp = User::where('user_id', $data_user->user_id)->first();
+                if ($otp->otp == $request->otp) {
+                    return response()->json([
+                        'message' => 'Success',
+                        'otp' => $otp->otp,
+                    ], 200);
+                } else {
+                    return response()->json([
+                        'message' => 'Wrong otp',
+                    ], 400);
+                }
+            } else {
+                return response()->json([
+                    'message' => 'Email not found',
+                ], 400);
+            }
+        } catch (\Exception $e) {
+            return response()->json(['message' => $e->getMessage()], 500);
         }
-        $data_user = DataUser::join('users', 'users.user_id', '=', 'data_users.user_id')->where('users.email', $request->email)->first();
-        $otp = User::where('user_id', $data_user->user_id)->first();
-        if ($otp->otp == $request->otp) {
-            User::where('user_id', $data_user->user_id)->update(['otp' => null]);
-            return response()->json([
-                'message' => 'Success',
-            ], 200);
-        } else {
-            return response()->json([
-                'message' => 'Wrong otp',
-            ], 400);
+    }
+
+    public function reset_password(Request $request)
+    {
+        try {
+            $validator = Validator::make($request->all(), [
+                'otp' => 'required',
+                'password' => 'required',
+            ]);
+            if ($validator->fails()) {
+                return response()->json($validator->errors(), 400);
+            }
+            $data_user = DataUser::join('users', 'users.user_id', '=', 'data_users.user_id')->where('users.otp', $request->otp)->first();
+            if ($data_user) {
+                User::where('user_id', $data_user->user_id)->update(['password' => Hash::make($request->password)]);
+                User::where('user_id', $data_user->user_id)->update(['otp' => null]);
+                Mail::to($data_user->email)->send(new InfoResetPassword($data_user));
+                return response()->json([
+                    'message' => 'Success',
+                ], 200);
+            } else {
+                return response()->json([
+                    'message' => 'Wrong otp',
+                ], 400);
+            }
+        } catch (\Exception $e) {
+            return response()->json(['message' => $e->getMessage()], 500);
         }
     }
 }

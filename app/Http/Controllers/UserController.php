@@ -21,7 +21,7 @@ class UserController extends Controller
     {
         $jwt = $request->bearerToken();
         $decoded = JWT::decode($jwt, new Key(env('SECRET_KEY_JWT'), 'HS256'));
-        $user = User::join('data_users', 'users.user_id', '=', 'data_users.user_id')->where('users.user_id', $decoded->id)->first();
+        $user = User::with('dataUser')->where('user_id', $decoded->id)->first();
         if (!$user) {
             return response()->json(['message' => 'User not found'], 404);
         }
@@ -190,7 +190,7 @@ class UserController extends Controller
     
     public function get_user()
     {
-        $user = User::join('data_users', 'users.user_id', '=', 'data_users.user_id')->get();
+        $user = User::with('dataUser')->get();
         return response()->json($user);
     }
 
@@ -198,5 +198,12 @@ class UserController extends Controller
         $jwt = request()->bearerToken();
         $decoded = JWT::decode($jwt, new Key(env('SECRET_KEY_JWT'), 'HS256'));
         return $decoded->id;
+    }
+
+    public function delete_user($user_id)
+    {
+        User::where('user_id', $user_id)->delete();
+        DataUser::where('user_id', $user_id)->delete();
+        return response()->json(['message' => 'Success'], 200);
     }
 }

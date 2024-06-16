@@ -1,8 +1,10 @@
 <?php
 
 use App\Http\Controllers\CourseController;
+use App\Http\Controllers\LoginAdminController;
 use App\Http\Controllers\LoginController;
 use App\Http\Controllers\SearchController;
+use App\Http\Controllers\TripayCallbackController;
 use App\Http\Controllers\UserController;
 use App\Http\Middleware\CheckRequestMethod;
 use Illuminate\Http\Request;
@@ -28,6 +30,8 @@ Route::post('register', [LoginController::class, 'register']);
 Route::post('resend/email', [LoginController::class, 'resend_verification_email']);
 Route::post('request/reset-password', [LoginController::class, 'otp']);
 Route::post('verify_otp', [LoginController::class, 'verify_otp']);
+Route::post('reset_password', [LoginController::class, 'reset_password']);
+Route::post('callback/tripay', [TripayCallbackController::class, 'handleCallback']);
 Route::middleware(['auth.jwt'])->group(function () {
     Route::post('info_user', [UserController::class, 'info_user']);
     Route::post('info_teacher', [UserController::class, 'info_teacher']);
@@ -41,9 +45,16 @@ Route::middleware(['auth.jwt'])->group(function () {
     Route::post('rating_course', [CourseController::class, 'rating_course']);
     Route::post('search_course', [SearchController::class, 'search_course']);
     Route::post('get_my_courses', [CourseController::class, 'get_my_courses']);
+    Route::post('buy-course', [CourseController::class, 'transaction_course']);
 });
+Route::post('admin/login', [LoginAdminController::class, 'login']);
 Route::middleware('admin')->group(function () {
-    Route::get('get_user', [UserController::class, 'get_user']);
+    Route::group(['prefix' => 'admin'], function () {
+        Route::get('count_dashboard', [LoginAdminController::class, 'count_dashboard']);
+        Route::get('get_user', [UserController::class, 'get_user']);
+        Route::delete('delete_user/{user_id}', [UserController::class, 'delete_user']);
+        Route::post('add_user', [LoginController::class, 'add_user']);
+    });
 });
 Route::middleware('web')->group(function () {
     Route::get('oauth/google/redirect', [LoginController::class, 'googleRedirect'])->name('login.google');
