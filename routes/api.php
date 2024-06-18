@@ -34,9 +34,8 @@ Route::post('reset_password', [LoginController::class, 'reset_password']);
 Route::post('callback/tripay', [TripayCallbackController::class, 'handleCallback']);
 Route::middleware(['auth.jwt'])->group(function () {
     Route::post('info_user', [UserController::class, 'info_user']);
-    Route::post('info_teacher', [UserController::class, 'info_teacher']);
+    Route::get('info_teacher', [UserController::class, 'info_teacher']);
     Route::post('register/teacher', [UserController::class, 'register_teacher']);
-    Route::post('info_teacher', [UserController::class, 'info_teacher']);
     Route::put('update_user', [UserController::class, 'update_user']);
     Route::put('update_teacher', [UserController::class, 'update_teacher']);
     Route::post('create_course', [CourseController::class, 'create_course']);
@@ -44,6 +43,10 @@ Route::middleware(['auth.jwt'])->group(function () {
     Route::get('get_courses', [CourseController::class, 'get_courses']);
     Route::post('rating_course', [CourseController::class, 'rating_course']);
     Route::post('search_course', [SearchController::class, 'search_course']);
+    Route::get('search_history', [SearchController::class, 'search_history']);
+    Route::delete('search_history/{id}', [SearchController::class, 'delete_search_history']);
+    Route::delete('search_history', [SearchController::class, 'delete_search_history_all']);
+    Route::post('history_search', [CourseController::class, 'history_search']);
     Route::post('get_my_courses', [CourseController::class, 'get_my_courses']);
     Route::post('buy-course', [CourseController::class, 'transaction_course']);
 });

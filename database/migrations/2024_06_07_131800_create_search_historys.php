@@ -18,6 +18,7 @@ return new class extends Migration
             $table->string('search_query');
             $table->integer('search_count')->nullable();
             $table->timestamps();
+            $table->timestamp('deleted_at')->nullable();
         });
     }
 

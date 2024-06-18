@@ -32,4 +32,8 @@ class DataUser extends Model
     {
         return $this->belongsTo(User::class, 'user_id', 'user_id');
     }
+    public function teacher()
+    {
+        return $this->belongsTo(Teacher::class, 'teacher_id', 'teacher_id');
+    }
 }

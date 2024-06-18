@@ -14,7 +14,7 @@ return new class extends Migration
         Schema::create('teacher_balances', function (Blueprint $table) {
             $table->id();
             $table->string('teacher_id', 10);
-            $table->foreign('teacher_id')->references('user_id')->on('users')->onDelete('cascade')->onUpdate('cascade');
+            $table->foreign('teacher_id')->references('teacher_id')->on('teachers')->onDelete('cascade')->onUpdate('cascade');
             $table->integer('balance');
             $table->timestamps();
         });

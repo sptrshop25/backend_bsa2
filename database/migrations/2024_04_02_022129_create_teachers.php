@@ -19,9 +19,10 @@ return new class extends Migration
             $table->string('teacher_instructional_skill', 255);
             $table->string('teacher_link_portfolio', 255)->nullable();
             $table->string('teacher_term_and_condition', 255)->nullable();
-            $table->integer('teacher_pending_balance')->nullable();
-            $table->integer('teacher_available_balance')->nullable();
             $table->timestamp('teacher_since')->useCurrent();
+            $table->string('teacher_link_github', 255)->nullable();
+            $table->string('teacher_link_linkedin', 255)->nullable();
+            $table->string('teacher_link_youtube', 255)->nullable();
             $table->enum('teacher_status', ['Active', 'Inactive'])->default('Active');
             $table->timestamps();
         });
