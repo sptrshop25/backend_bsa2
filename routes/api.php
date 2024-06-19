@@ -47,8 +47,11 @@ Route::middleware(['auth.jwt'])->group(function () {
     Route::delete('search_history/{id}', [SearchController::class, 'delete_search_history']);
     Route::delete('search_history', [SearchController::class, 'delete_search_history_all']);
     Route::post('history_search', [CourseController::class, 'history_search']);
-    Route::post('get_my_courses', [CourseController::class, 'get_my_courses']);
+    Route::get('teacher/list-my-course', [CourseController::class, 'get_my_courses']);
     Route::post('buy-course', [CourseController::class, 'transaction_course']);
+    Route::get('detail-course/{course_id}', [CourseController::class, 'detail_course']);
+    Route::get('list-category', [CourseController::class, 'list_category']);
+    Route::get('list-sub-category', [CourseController::class, 'list_sub_category']);
 });
 Route::post('admin/login', [LoginAdminController::class, 'login']);
 Route::middleware('admin')->group(function () {

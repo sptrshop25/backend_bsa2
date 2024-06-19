@@ -20,4 +20,9 @@ class Course extends Model
     {
         return $this->belongsTo(DataUser::class, 'teacher_id', 'user_id');
     }
+
+    public function material()
+    {
+        return $this->hasMany(CourseMaterial::class, 'course_id', 'course_id');
+    }
 }

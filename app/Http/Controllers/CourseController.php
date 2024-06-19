@@ -6,6 +6,7 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Validator;
 use App\Models\Course;
 use App\Models\CourseCategory;
+use App\Models\CourseMaterial;
 use App\Models\CourseRating;
 use App\Models\CourseSubCategory;
 use App\Models\CourseTransaction;
@@ -19,46 +20,104 @@ class CourseController extends Controller
 {
     public function create_course(Request $request)
     {
+        // Validasi input
         $validator = Validator::make($request->all(), [
-            'course_title' => 'required',
-            'course_description' => 'required',
-            'course_price' => 'required|numeric',
-            'course_level' => 'required',
-            'course_category' => 'required',
-            'course_is_free' => 'required',
-            'course_image' => 'required|image|mimes:jpeg,png,jpg,gif,svg|max:2048',
+            'judulKursus' => 'required|string',
+            'deskripsi' => 'required|string',
+            'tingkatan' => 'required|string',
+            'subBidang' => 'required|string',
+            'bannerKursus' => 'required|image|mimes:jpeg,png,jpg,gif,svg|max:2048',
+            'jenisHarga' => 'required|string|in:free,berbayar',
+            'hargaKursus' => 'nullable|numeric',
+            'jenisLangganan' => 'required|string|in:unlimited,limited',
+            'jumlahBulan' => 'nullable|integer|min:1',
+            'babList' => 'required|array',
+            'babList.*.judul' => 'required|string',
+            'babList.*.subBab' => 'nullable|string',
+            'babList.*.materi' => 'nullable|file|mimes:mp4,mov,avi,wmv',
+            'babList.*.deskripsi' => 'nullable|string',
         ]);
+
         if ($validator->fails()) {
             return response()->json($validator->errors(), 400);
         }
-        $jwt = $request->bearerToken();
-        $teacher_id = JWT::decode($jwt, new Key(env('SECRET_KEY_JWT'), 'HS256'))->id;
+
+        // Proses data yang diterima
         try {
-            $category_id = CourseSubCategory::where('id', $request->course_category)->get();
-            foreach ($category_id as $cat_id) {
-                $category_id = $cat_id->course_category_id;
+            // Mendeklarasikan variabel untuk atribut kursus
+            $tingkatan = $request->tingkatan;
+            switch ($tingkatan) {
+                case 'Pemula':
+                    $tingkatan = 'beginner';
+                    break;
+                case 'Menengah':
+                    $tingkatan = 'intermediate';
+                    break;
+                case 'Ahli':
+                    $tingkatan = 'advanced';
+                    break;
+                default:
+                    $tingkatan = null;
             }
-            $category = CourseCategory::where('id', $category_id)->first()->category_name;
-            $imagePath = $request->file('course_image')->store('course_image', 'public');
-            $course = new Course($validator->validated());
-            $course->course_id = $this->generateCourseCode($category);
-            $course->course_title = $request->course_title;
-            $course->teacher_id = $teacher_id;
-            $course->course_description = $request->course_description;
-            $course->course_price = $request->course_price;
-            $course->course_category_id = $request->course_category;
-            $course->course_duration = $request->course_duration;
-            $course->course_level = $request->course_level;
-            $course->course_is_free = $request->course_is_free;
-            $course->course_price_discount = $request->course_price_discount ?? null;
+
+            // Penanganan harga kursus
+            $course_is_free = $request->jenisHarga === 'free' ? 'yes' : 'no';
+            $hargaKursus = $request->jenisHarga === 'free' ? 0 : $request->hargaKursus;
+            $course_duration = $request->jenisLangganan === 'unlimited' ? null : $request->jumlahBulan;
+
+            // Mendapatkan id kategori berdasarkan sub bidang
+            $category_id = CourseSubCategory::where('sub_category_name', $request->subBidang)->firstOrFail()->course_category_id;
+
+            // Mendapatkan nama kategori
+            $category = CourseCategory::findOrFail($category_id)->category_name;
+
+            // Generate course ID berdasarkan kategori
+            $course_id = $this->generateCourseCode($category);
+
+            // Penyimpanan gambar kursus
+            $imagePath = $request->file('bannerKursus')->store('course_image', 'public');
+
+            // Simpan data kursus
+            $course = new Course();
+            $course->course_id = $course_id;
+            $course->course_title = $request->judulKursus;
+            $course->teacher_id = JWT::decode($request->bearerToken(), new Key(env('SECRET_KEY_JWT'), 'HS256'))->id;
+            $course->course_description = $request->deskripsi;
+            $course->course_price = $hargaKursus;
+            $course->course_category_id = $category_id;
+            $course->course_duration = $course_duration;
+            $course->course_level = $tingkatan;
+            $course->course_is_free = $course_is_free;
+            if ($request->hargaDiskon < 1) {
+                $course->course_price_discount = $request->hargaDiskon;
+            }
             $course->course_image = env('APP_URL') . '/storage/' . $imagePath;
             $course->created_at = Carbon::now()->toDateTimeString();
             $course->save();
+
+            // Simpan bahan pelajaran
+            foreach ($request->babList as $index => $bab) {
+                $material = new CourseMaterial();
+                $material->material_id = $this->generateMaterialCode();
+                
+                if (isset($bab['materi'])) {
+                    $videoPath = $bab['materi']->store('course_video_materi', 'public');
+                    $material->material_file = env('APP_URL') . '/storage/' . $videoPath;
+                }
+                $material->material_bab = $index + 1;
+                $material->course_id = $course_id;
+                $material->material_title = $bab['judul'];
+                $material->material_sub_title = $bab['subBab'];
+                $material->material_description = $bab['deskripsi'];
+                $material->save();
+            }            
+
             return response()->json(['message' => 'Course created successfully'], 200);
         } catch (\Exception $e) {
             return response()->json(['message' => $e->getMessage()], 500);
         }
     }
+
 
     private function generateCourseCode($category)
     {
@@ -90,10 +149,20 @@ class CourseController extends Controller
         return response()->json($courses);
     }
 
-    public function get_my_courses(Request $request)
+    public function detail_course($id)
     {
-        $user_id = JWT::decode($request->bearerToken(), new Key(env('SECRET_KEY_JWT'), 'HS256'))->id;
-        $courses = Course::with(['subCategory.category', 'teacher'])->where('teacher_id', $user_id)->get();
+        $course = Course::with(['subCategory.category', 'teacher', 'material'])->where('course_id', $id)->first();
+        if (!$course) {
+            return response()->json(['message' => 'Course not found'], 404);
+        }
+        return response()->json($course);
+    }
+    public function get_my_courses()
+    {
+        $courses = Course::where('teacher_id', $this->user_id())->get();
+        if (!$courses) {
+            return response()->json(['message' => 'Course not found'], 404);
+        }
         return response()->json($courses);
     }
     public function rating_course(Request $request)
@@ -164,7 +233,7 @@ class CourseController extends Controller
                         'product_url' => 'https://tokokamu.com/product/nama-produk-1',
                         'image_url'   => $course->course_image,
                     ],
-                    ],
+                ],
                 'return_url' => env('TRIPAY_RETURN_URL'),
                 'expired_time' => (time() + (24 * 60 * 60)),
                 'signature' => $signature
@@ -216,5 +285,23 @@ class CourseController extends Controller
         $randomNum = substr(str_shuffle("0123456789"), 0, 10);
         $number = $latestTransaction ? intval(substr($latestTransaction->transaction_id, -4)) + 1 : 1;
         return "INV" . $randomNum;
+    }
+
+    public function list_category()
+    {
+        $category = CourseCategory::with('sub_category')->get();
+        return response()->json($category, 200);
+    }
+
+    private function user_id()
+    {
+        $jwt = JWT::decode(request()->bearerToken(), new Key(env('SECRET_KEY_JWT'), 'HS256'));
+        return $jwt->id;
+    }
+
+    private function generateMaterialCode()
+    {
+        $randomNum = substr(str_shuffle("0123456789"), 0, 10);
+        return 'MAT'. '-' . $randomNum;
     }
 }
