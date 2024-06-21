@@ -13,12 +13,11 @@ return new class extends Migration
     {
         Schema::create('course_materials', function (Blueprint $table) {
             $table->string('material_id', 20)->primary();
-            $table->integer('material_bab');
-            $table->string('course_id', 20);
-            $table->foreign('course_id')->references('course_id')->on('courses')->onDelete('cascade')->onUpdate('cascade');
-            $table->string('material_title', 50);
+            // $table->string('course_id', 20);
+            // $table->foreign('course_id')->references('course_id')->on('courses')->onDelete('cascade')->onUpdate('cascade');
+            $table->foreignId('meterial_bab_id')->constrained('material_babs')->onDelete('cascade')->onUpdate('cascade');
             $table->string('material_sub_title', 50);
-            $table->enum('material_file_type', ['pdf', 'video'])->nullable();
+            // $table->enum('material_file_type', ['pdf', 'video'])->nullable();
             $table->string('material_file', 255)->nullable();
             $table->string('material_description', 255);
             $table->timestamps();

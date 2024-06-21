@@ -2,15 +2,20 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\Assignments;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Validator;
 use App\Models\Course;
 use App\Models\CourseCategory;
+use App\Models\CourseEnrollment;
 use App\Models\CourseMaterial;
 use App\Models\CourseRating;
 use App\Models\CourseSubCategory;
 use App\Models\CourseTransaction;
+use App\Models\MaterialBab;
+use App\Models\PaymentMethod;
 use App\Models\User;
+use App\Models\Wishlist;
 use Carbon\Carbon;
 use Firebase\JWT\JWT;
 use Firebase\JWT\Key;
@@ -88,29 +93,33 @@ class CourseController extends Controller
             $course->course_duration = $course_duration;
             $course->course_level = $tingkatan;
             $course->course_is_free = $course_is_free;
-            if ($request->hargaDiskon < 1) {
-                $course->course_price_discount = $request->hargaDiskon;
-            }
+            // if ($request->hargaDiskon < 1) {
+            //     $course->course_price_discount = $request->hargaDiskon;
+            // }
             $course->course_image = env('APP_URL') . '/storage/' . $imagePath;
             $course->created_at = Carbon::now()->toDateTimeString();
             $course->save();
 
-            // Simpan bahan pelajaran
             foreach ($request->babList as $index => $bab) {
-                $material = new CourseMaterial();
-                $material->material_id = $this->generateMaterialCode();
-                
-                if (isset($bab['materi'])) {
-                    $videoPath = $bab['materi']->store('course_video_materi', 'public');
-                    $material->material_file = env('APP_URL') . '/storage/' . $videoPath;
+                $material_bab = new MaterialBab();
+                $material_bab->course_id = $course_id;
+                $material_bab->title = $bab['judul'];
+                $material_bab->bab = $index + 1;
+                $material_bab->save();
+                foreach ($bab['subBabList'] as $subBab) {
+                    $material = new CourseMaterial();
+                    $material->material_id = $this->generateMaterialCode();
+                    if (isset($subBab['materi'])) {
+                        $videoPath = $subBab['materi']->store('course_video_materi', 'public');
+                        $material->material_file = env('APP_URL') . '/storage/' . $videoPath;
+                    }
+                    $material->material_bab_id = $material_bab->id;
+                    $material->material_sub_title = $subBab['judul'];
+                    $material->material_description = $subBab['deskripsi'];
+                    $material->save();
                 }
-                $material->material_bab = $index + 1;
-                $material->course_id = $course_id;
-                $material->material_title = $bab['judul'];
-                $material->material_sub_title = $bab['subBab'];
-                $material->material_description = $bab['deskripsi'];
-                $material->save();
-            }            
+            }
+
 
             return response()->json(['message' => 'Course created successfully'], 200);
         } catch (\Exception $e) {
@@ -151,11 +160,17 @@ class CourseController extends Controller
 
     public function detail_course($id)
     {
-        $course = Course::with(['subCategory.category', 'teacher', 'material'])->where('course_id', $id)->first();
+        $course = Course::with(['subCategory.category', 'teacher', 'materialBab.courseMaterials', 'quiz', 'rating.user.dataUser'])->where('course_id', $id)->first();
+        $wishlist = Wishlist::where('user_id', $this->user_id())->where('course_id', $id)->count();
+        $count_student = CourseEnrollment::where('course_id', $id)->count();
+        $count_bab = MaterialBab::where('course_id', $id)->count();
+        $count_video_material = MaterialBab::join('course_materials', 'course_materials.material_bab_id', '=', 'material_babs.id')->where('course_id', $id)->whereNotNull('course_materials.material_file')->count();
+        $count_user_rating = CourseRating::where('course_id', $id)->count();
+        $count_quiz = Assignments::where('course_id', $id)->count();
         if (!$course) {
             return response()->json(['message' => 'Course not found'], 404);
         }
-        return response()->json($course);
+        return response()->json(['course' => $course, 'count_student' => $count_student, 'count_bab' => $count_bab, 'count_video_material' => $count_video_material, 'count_quiz' => $count_quiz, 'count_user_rating' => $count_user_rating, 'wishlist' => $wishlist], 200);
     }
     public function get_my_courses()
     {
@@ -293,6 +308,44 @@ class CourseController extends Controller
         return response()->json($category, 200);
     }
 
+    public function save_wishlist(Request $request)
+    {
+        $validator = Validator::make($request->all(), [
+            'course_id' => 'required|string',
+        ]);
+        if ($validator->fails()) {
+            return response()->json($validator->errors(), 400);
+        }
+        $user_id = $this->user_id();
+        $wishlist = new Wishlist();
+        $wishlist->user_id = $user_id;
+        $wishlist->course_id = $request->course_id;
+        $wishlist->created_at = Carbon::now()->toDateTimeString();
+        $wishlist->save();
+        return response()->json([
+            'message' => 'Wishlist created successfully',
+        ], 200);
+    }
+
+    public function delete_wishlist($id)
+    {
+        try {
+            $user_id = $this->user_id();
+            $wishlist = Wishlist::where('user_id', $user_id)->where('course_id', $id)->delete();
+            return response()->json([
+                'message' => 'Wishlist deleted successfully',
+            ], 200);
+        } catch (\Exception $e) {
+            return response()->json(['message' => $e->getMessage()], 500);
+        }
+    }
+
+    public function list_payment()
+    {
+        $payment = PaymentMethod::all();
+        return response()->json($payment, 200);
+    }
+
     private function user_id()
     {
         $jwt = JWT::decode(request()->bearerToken(), new Key(env('SECRET_KEY_JWT'), 'HS256'));
@@ -302,6 +355,6 @@ class CourseController extends Controller
     private function generateMaterialCode()
     {
         $randomNum = substr(str_shuffle("0123456789"), 0, 10);
-        return 'MAT'. '-' . $randomNum;
+        return 'MAT' . '-' . $randomNum;
     }
 }

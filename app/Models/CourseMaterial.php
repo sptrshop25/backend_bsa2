@@ -22,4 +22,8 @@ class CourseMaterial extends Model
     {
         return $this->belongsTo(Course::class, 'course_id', 'course_id');
     }
+    public function materialBab()
+    {
+        return $this->belongsTo(MaterialBab::class, 'material_bab_id', 'id');
+    }
 }

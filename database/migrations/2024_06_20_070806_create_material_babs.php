@@ -11,12 +11,12 @@ return new class extends Migration
      */
     public function up(): void
     {
-        Schema::create('wishlists', function (Blueprint $table) {
-            $table->bigInteger('wishlist_id')->primary()->autoIncrement();
-            $table->string('user_id', 10);
-            $table->foreign('user_id')->references('user_id')->on('users')->onDelete('cascade')->onUpdate('cascade');
+        Schema::create('material_babs', function (Blueprint $table) {
+            $table->id();
             $table->string('course_id', 20);
             $table->foreign('course_id')->references('course_id')->on('courses')->onDelete('cascade')->onUpdate('cascade');
+            $table->integer('bab');
+            $table->string('title');
             $table->timestamps();
         });
     }
@@ -26,6 +26,6 @@ return new class extends Migration
      */
     public function down(): void
     {
-        Schema::dropIfExists('wishlist');
+        Schema::dropIfExists('material_babs');
     }
 };

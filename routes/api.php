@@ -1,5 +1,6 @@
 <?php
 
+use App\Http\Controllers\AdminController;
 use App\Http\Controllers\CourseController;
 use App\Http\Controllers\LoginAdminController;
 use App\Http\Controllers\LoginController;
@@ -52,6 +53,9 @@ Route::middleware(['auth.jwt'])->group(function () {
     Route::get('detail-course/{course_id}', [CourseController::class, 'detail_course']);
     Route::get('list-category', [CourseController::class, 'list_category']);
     Route::get('list-sub-category', [CourseController::class, 'list_sub_category']);
+    Route::post('save-wishlist', [CourseController::class, 'save_wishlist']);
+    Route::delete('remove-wishlist/{course_id}', [CourseController::class, 'delete_wishlist']);
+    Route::get('list-payment', [CourseController::class, 'list_payment']);
 });
 Route::post('admin/login', [LoginAdminController::class, 'login']);
 Route::middleware('admin')->group(function () {
@@ -60,6 +64,7 @@ Route::middleware('admin')->group(function () {
         Route::get('get_user', [UserController::class, 'get_user']);
         Route::delete('delete_user/{user_id}', [UserController::class, 'delete_user']);
         Route::post('add_user', [LoginController::class, 'add_user']);
+        Route::post('add-payment', [AdminController::class, 'add_method_payment']);
     });
 });
 Route::middleware('web')->group(function () {

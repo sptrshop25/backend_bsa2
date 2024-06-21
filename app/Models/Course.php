@@ -21,8 +21,18 @@ class Course extends Model
         return $this->belongsTo(DataUser::class, 'teacher_id', 'user_id');
     }
 
-    public function material()
+    public function materialBab()
     {
-        return $this->hasMany(CourseMaterial::class, 'course_id', 'course_id');
+        return $this->hasMany(MaterialBab::class, 'course_id', 'course_id');
+    }
+
+    public function quiz()
+    {
+        return $this->hasMany(Assignments::class, 'course_id', 'course_id');
+    }
+
+    public function rating()
+    {
+        return $this->hasMany(CourseRating::class, 'course_id', 'course_id');
     }
 }
