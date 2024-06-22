@@ -35,4 +35,9 @@ class Course extends Model
     {
         return $this->hasMany(CourseRating::class, 'course_id', 'course_id');
     }
+
+    public function wishlist()
+    {
+        return $this->hasMany(Wishlist::class, 'course_id', 'course_id');
+    }
 }

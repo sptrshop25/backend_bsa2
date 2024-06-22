@@ -47,7 +47,6 @@ Route::middleware(['auth.jwt'])->group(function () {
     Route::get('search_history', [SearchController::class, 'search_history']);
     Route::delete('search_history/{id}', [SearchController::class, 'delete_search_history']);
     Route::delete('search_history', [SearchController::class, 'delete_search_history_all']);
-    Route::post('history_search', [CourseController::class, 'history_search']);
     Route::get('teacher/list-my-course', [CourseController::class, 'get_my_courses']);
     Route::post('buy-course', [CourseController::class, 'transaction_course']);
     Route::get('detail-course/{course_id}', [CourseController::class, 'detail_course']);
@@ -56,6 +55,9 @@ Route::middleware(['auth.jwt'])->group(function () {
     Route::post('save-wishlist', [CourseController::class, 'save_wishlist']);
     Route::delete('remove-wishlist/{course_id}', [CourseController::class, 'delete_wishlist']);
     Route::get('list-payment', [CourseController::class, 'list_payment']);
+    Route::get('my-wishlist', [CourseController::class, 'my_wishlist']);
+    Route::get('my-course', [CourseController::class, 'my_course']);
+    Route::get('material/{course_id}', [CourseController::class, 'get_material']);
 });
 Route::post('admin/login', [LoginAdminController::class, 'login']);
 Route::middleware('admin')->group(function () {

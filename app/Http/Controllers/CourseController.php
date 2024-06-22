@@ -127,7 +127,11 @@ class CourseController extends Controller
         }
     }
 
-
+    public function get_material($id)
+    {
+        $materials = CourseMaterial::where('material_id', $id)->get();
+        return response()->json($materials);
+    }
     private function generateCourseCode($category)
     {
         $prefix = 'bsa-' . $this->generateCategoryPrefix($category);
@@ -154,7 +158,7 @@ class CourseController extends Controller
 
     public function get_courses()
     {
-        $courses = Course::with(['subCategory.category', 'teacher'])->get();
+        $courses = Course::with(['subCategory.category', 'teacher'])->whereNot('teacher_id', $this->user_id())->get();
         return response()->json($courses);
     }
 
@@ -175,6 +179,15 @@ class CourseController extends Controller
     public function get_my_courses()
     {
         $courses = Course::where('teacher_id', $this->user_id())->get();
+        if (!$courses) {
+            return response()->json(['message' => 'Course not found'], 404);
+        }
+        return response()->json($courses);
+    }
+
+    public function my_course()
+    {
+        $courses = CourseEnrollment::with(['teacher', 'materialBab.courseMaterials', 'rating.user.dataUser', 'course'])->where('user_id', $this->user_id())->get();
         if (!$courses) {
             return response()->json(['message' => 'Course not found'], 404);
         }
@@ -287,7 +300,7 @@ class CourseController extends Controller
             $courseTransaction->course_id = $request->course_id;
             $courseTransaction->created_at = Carbon::now()->toDateTimeString();
             $courseTransaction->save();
-            return response()->json(['message' => 'Course transaction created successfully'], 200);
+            return response()->json($response, 200);
         } catch (\Exception $e) {
             return response()->json(['message' => $e->getMessage()], 500);
         }
@@ -344,6 +357,13 @@ class CourseController extends Controller
     {
         $payment = PaymentMethod::all();
         return response()->json($payment, 200);
+    }
+
+    public function my_wishlist()
+    {
+        $user_id = $this->user_id();
+        $wishlist = Wishlist::with('course')->where('user_id', $user_id)->get();
+        return response()->json($wishlist, 200);
     }
 
     private function user_id()

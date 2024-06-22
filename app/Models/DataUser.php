@@ -24,7 +24,7 @@ class DataUser extends Model
     protected static function booted()
     {
         static::addGlobalScope('notDeleted', function (Builder $builder) {
-            $builder->whereNull('deleted_at');
+            $builder->whereNull('data_users.deleted_at');
         });
     }
 

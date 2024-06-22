@@ -53,7 +53,7 @@ class User extends Authenticatable
     protected static function booted()
     {
         static::addGlobalScope('notDeleted', function (Builder $builder) {
-            $builder->whereNull('deleted_at');
+            $builder->whereNull('users.deleted_at');
         });
     }
 

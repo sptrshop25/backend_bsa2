@@ -19,6 +19,9 @@ return new class extends Migration
             $table->foreign('course_id')->references('course_id')->on('courses')->onDelete('cascade')->onUpdate('cascade');
             $table->timestamp('enrolled_at')->useCurrent();
             $table->enum('status', ['active', 'inactive', 'completed'])->default('active');
+            $table->integer('completed_count')->default(0);
+            $table->timestamp('active_period')->nullable();
+            $table->timestamps();
         });
     }
 

@@ -1,6 +1,7 @@
 <?php 
 namespace App\Http\Controllers;
 
+use App\Models\CourseEnrollment;
 use App\Models\CourseTransaction;
 use Illuminate\Http\Request;
 
@@ -75,6 +76,12 @@ class TripayCallbackController extends Controller
                     'message' => 'Failed to update invoice status',
                 ], 500);
             }
+
+            $course_enrollment = new CourseEnrollment();
+            $course_enrollment->course_id = $invoice->course_id;
+            $course_enrollment->user_id = $invoice->user_id;
+            $course_enrollment->active_period = $invoice->active_period;
+            $course_enrollment->save();
 
             return response()->json(['success' => true]);
         }
