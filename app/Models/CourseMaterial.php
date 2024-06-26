@@ -26,4 +26,9 @@ class CourseMaterial extends Model
     {
         return $this->belongsTo(MaterialBab::class, 'material_bab_id', 'id');
     }
+    
+    public function materialSuccess()
+    {
+        return $this->hasMany(MaterialSuccess::class, 'material_code', 'material_id');
+    }
 }

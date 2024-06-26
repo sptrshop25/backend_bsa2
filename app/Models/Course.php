@@ -40,4 +40,14 @@ class Course extends Model
     {
         return $this->hasMany(Wishlist::class, 'course_id', 'course_id');
     }
+
+    public function courseTransaction()
+    {
+        return $this->belongsTo(CourseTransaction::class, 'course_id', 'course_id');
+    }
+
+    public function enrollment()
+    {
+        return $this->hasMany(CourseEnrollment::class, 'course_id', 'course_id');
+    }
 }

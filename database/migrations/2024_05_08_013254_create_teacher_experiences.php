@@ -19,7 +19,7 @@ return new class extends Migration
             $table->date('start_date');
             $table->date('end_date')->nullable();
             $table->string('position');
-            $table->string('description');
+            $table->text('description');
             $table->enum('is_still_working', ['yes', 'no'])->nullable();
             $table->timestamps();
         });

@@ -13,7 +13,9 @@ use App\Models\CourseRating;
 use App\Models\CourseSubCategory;
 use App\Models\CourseTransaction;
 use App\Models\MaterialBab;
+use App\Models\MaterialSuccess;
 use App\Models\PaymentMethod;
+use App\Models\Teacher;
 use App\Models\User;
 use App\Models\Wishlist;
 use Carbon\Carbon;
@@ -164,7 +166,7 @@ class CourseController extends Controller
 
     public function detail_course($id)
     {
-        $course = Course::with(['subCategory.category', 'teacher', 'materialBab.courseMaterials', 'quiz', 'rating.user.dataUser'])->where('course_id', $id)->first();
+        $course = Course::with(['subCategory.category', 'teacher', 'materialBab.courseMaterials.materialSuccess', 'quiz', 'rating.user.dataUser'])->where('course_id', $id)->first();
         $wishlist = Wishlist::where('user_id', $this->user_id())->where('course_id', $id)->count();
         $count_student = CourseEnrollment::where('course_id', $id)->count();
         $count_bab = MaterialBab::where('course_id', $id)->count();
@@ -365,7 +367,6 @@ class CourseController extends Controller
         $wishlist = Wishlist::with('course')->where('user_id', $user_id)->get();
         return response()->json($wishlist, 200);
     }
-
     private function user_id()
     {
         $jwt = JWT::decode(request()->bearerToken(), new Key(env('SECRET_KEY_JWT'), 'HS256'));
@@ -376,5 +377,93 @@ class CourseController extends Controller
     {
         $randomNum = substr(str_shuffle("0123456789"), 0, 10);
         return 'MAT' . '-' . $randomNum;
+    }
+
+    public function transaction_free(Request $request)
+    {
+        $validator = Validator::make($request->all(), [
+            'course_id' => 'required|string',
+        ]);
+        if ($validator->fails()) {
+            return response()->json($validator->errors(), 400);
+        }
+        $user_id = $this->user_id();
+        $course = CourseEnrollment::where('course_id', $request->course_id)
+            ->where('user_id', $user_id)
+            ->first();
+
+        if ($course) {
+            return response()->json(['message' => 'Course already purchased'], 400);
+        }
+        $course_duration = null;
+        if ($course && $course->course_duration) {
+            $course_duration = Carbon::now()->addMonths($course->course_duration)->toDateTimeString();
+        }
+        $courseEnrollment = new CourseEnrollment();
+        $courseEnrollment->user_id = $user_id;
+        $courseEnrollment->course_id = $request->course_id;
+        $courseEnrollment->created_at = Carbon::now()->toDateTimeString();
+        $courseEnrollment->active_period = $course_duration;
+        $courseEnrollment->save();
+        return response()->json(['message' => 'Course purchased successfully'], 200);
+    }
+
+    public function detail_materi($id)
+    {
+        $materi = CourseMaterial::with('materialSuccess')->join('material_babs', 'course_materials.material_bab_id', '=', 'material_babs.id')->where('material_id', $id)->first();
+        return response()->json($materi, 200);
+    }
+
+    public function list_materi($id)
+    {
+        $materi = MaterialBab::with('courseMaterials')->where('course_id', $id)->get();
+        return response()->json($materi, 200);
+    }
+
+    public function mark_material_finished(Request $request)
+    {
+        try {
+            $validator = Validator::make($request->all(), [
+                'course_id' => 'required|string',
+                'material_id' => 'required|string',
+            ]);
+            if ($validator->fails()) {
+                return response()->json($validator->errors(), 400);
+            }
+            $user_id = $this->user_id();
+            $course = CourseEnrollment::where('course_id', $request->course_id)->where('user_id', $user_id)->first();
+            if (!$course) {
+                return response()->json(['message' => 'Course not found'], 404);
+            }
+            $mark_material = MaterialSuccess::where('student_id', $user_id)->where('material_code', $request->material_id)->first();
+            if ($mark_material) {
+                return response()->json(['message' => 'Material already marked'], 400);
+            }
+            CourseEnrollment::where('course_id', $request->course_id)->where('user_id', $user_id)->update(['completed_count' => $course->completed_count + 1]);
+            MaterialSuccess::create([
+                'student_id' => $user_id,
+                'material_code' => $request->material_id
+            ]);
+            return response()->json(['message' => 'Material marked as finished'], 200);
+        } catch (\Exception $e) {
+            return response()->json(['message' => $e->getMessage()], 500);
+        }
+    }
+
+    public function my_transaction()
+    {
+        $user_id = $this->user_id();
+        $transaction = CourseTransaction::with('course')->where('user_id', $user_id)->get();
+        return response()->json($transaction, 200);
+    }
+
+    public function check_course($id)
+    {
+        $user_id = $this->user_id();
+        $course = CourseEnrollment::where('course_id', $id)->where('user_id', $user_id)->first();
+        if ($course) {
+            return response()->json(['message' => 'Course already purchased'], 400);
+        }
+        return response()->json($course, 200);
     }
 }

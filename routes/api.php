@@ -58,6 +58,13 @@ Route::middleware(['auth.jwt'])->group(function () {
     Route::get('my-wishlist', [CourseController::class, 'my_wishlist']);
     Route::get('my-course', [CourseController::class, 'my_course']);
     Route::get('material/{course_id}', [CourseController::class, 'get_material']);
+    Route::get('list_materi/{course_id}', [CourseController::class, 'list_materi']);
+    Route::post('transaction', [CourseController::class, 'transaction_free']);
+    Route::get('detail-materi/{material_id}', [CourseController::class, 'detail_materi']);
+    Route::post('material-mark-finish', [CourseController::class, 'mark_material_finished']);
+    Route::get('my-transaction', [CourseController::class, 'my_transaction']);
+    Route::get('check_course/{course_id}', [CourseController::class, 'check_course']);
+    Route::get('teacher-profile/{user_id}', [UserController::class, 'teacher_profile']);
 });
 Route::post('admin/login', [LoginAdminController::class, 'login']);
 Route::middleware('admin')->group(function () {

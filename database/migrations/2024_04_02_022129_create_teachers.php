@@ -14,7 +14,7 @@ return new class extends Migration
         Schema::create('teachers', function (Blueprint $table) {
             $table->string('teacher_id', 30)->primary()->unique();
             $table->foreign('teacher_id')->references('user_id')->on('users')->onDelete('cascade')->onUpdate('cascade');
-            $table->string('teacher_description', 255)->nullable();
+            $table->text('teacher_description')->nullable();
             $table->string('teacher_expertise_field', 50);
             $table->string('teacher_instructional_skill', 255);
             $table->string('teacher_link_portfolio', 255)->nullable();

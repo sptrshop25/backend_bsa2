@@ -17,4 +17,9 @@ class CourseTransaction extends Model
         'transaction_amount',
         'transaction_method',
     ];
+
+    public function course()
+    {
+        return $this->hasMany(Course::class, 'course_id', 'course_id');
+    }
 }

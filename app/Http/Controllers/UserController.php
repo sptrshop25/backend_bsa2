@@ -234,4 +234,10 @@ class UserController extends Controller
         DataUser::where('user_id', $user_id)->delete();
         return response()->json(['message' => 'Success'], 200);
     }
+
+    public function teacher_profile($id)
+    {
+        $teacher = Teacher::with('dataUser', 'course.rating', 'course.enrollment', 'teacherEducationHistory', 'teacherExperience')->where('teacher_id', $id)->first();
+        return response()->json($teacher, 200);
+    }
 }

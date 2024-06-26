@@ -13,4 +13,19 @@ class Teacher extends Model
     {
         return $this->hasOne(DataUser::class, 'user_id', 'teacher_id');
     }
+
+    public function course()
+    {
+        return $this->hasMany(Course::class, 'teacher_id', 'teacher_id');
+    }
+
+    public function teacherEducationHistory()
+    {
+        return $this->hasMany(TeacherEducationHistory::class, 'teacher_id', 'teacher_id');
+    }
+
+    public function teacherExperience()
+    {
+        return $this->hasMany(TeacherExperience::class, 'teacher_id', 'teacher_id');
+    }
 }
