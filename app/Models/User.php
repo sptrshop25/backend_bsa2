@@ -66,6 +66,11 @@ class User extends Authenticatable
     {
         return $this->hasMany(CourseRating::class, 'user_id', 'user_id');
     }
+
+    public function courseTransaction()
+    {
+        return $this->belongsTo(CourseTransaction::class, 'user_id', 'user_id');
+    }
 }
 
 ?>

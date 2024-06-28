@@ -22,4 +22,8 @@ class CourseTransaction extends Model
     {
         return $this->hasMany(Course::class, 'course_id', 'course_id');
     }
+    public function user()
+    {
+        return $this->hasMany(User::class, 'user_id', 'user_id');
+    }
 }

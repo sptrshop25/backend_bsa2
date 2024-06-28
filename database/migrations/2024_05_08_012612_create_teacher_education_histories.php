@@ -18,7 +18,8 @@ return new class extends Migration
             $table->string('teacher_degree_title', 100);
             $table->string('teacher_university', 255);
             $table->string('teacher_major', 100);
-            $table->year('teacher_graduation_year');
+            $table->date('teacher_start_year');
+            $table->date('teacher_graduation_year');
             $table->timestamps();
         });
     }

@@ -36,4 +36,9 @@ class DataUser extends Model
     {
         return $this->belongsTo(Teacher::class, 'teacher_id', 'teacher_id');
     }
+
+    public function enrollment()
+    {
+        return $this->hasMany(CourseEnrollment::class, 'user_id', 'user_id');
+    }
 }

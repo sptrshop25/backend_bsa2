@@ -17,11 +17,10 @@ use Firebase\JWT\Key;
 
 class UserController extends Controller
 {
-    public function info_user(Request $request)
+    public function info_user()
     {
-        $jwt = $request->bearerToken();
-        $decoded = JWT::decode($jwt, new Key(env('SECRET_KEY_JWT'), 'HS256'));
-        $user = User::with('dataUser')->where('user_id', $decoded->id)->first();
+        $user_id = $this->user_id();
+        $user = User::with('dataUser')->where('user_id', $user_id)->first();
         if (!$user) {
             return response()->json(['message' => 'User not found'], 404);
         }
@@ -30,16 +29,13 @@ class UserController extends Controller
 
     public function info_teacher()
     {
-        $teacher = Teacher::with(['dataUser', 'dataUser.user'])
-        ->join('teacher_balances', 'teacher_balances.teacher_id', '=', 'teachers.teacher_id')
-        ->join('pending_balances', 'pending_balances.teacher_id', '=', 'teachers.teacher_id')
-        ->where('teachers.teacher_id', $this->user_id())
-        ->first();    
+        $teacher = Teacher::with(['dataUser.user', 'course.enrollment'])
+            // ->join('teacher_balances', 'teacher_balances.teacher_id', '=', 'teachers.teacher_id')
+            // ->join('pending_balances', 'pending_balances.teacher_id', '=', 'teachers.teacher_id')
+            ->where('teachers.teacher_id', $this->user_id())
+            ->first();
         if (!$teacher) {
-            $teacher = Teacher::with(['dataUser', 'dataUser.user'])->first();
-            if (!$teacher) {
-                return response()->json(['message' => 'Teacher not found'], 404);
-            }
+            return response()->json(['message' => 'Teacher not found'], 404);
         }
         return response()->json($teacher);
     }
@@ -48,39 +44,43 @@ class UserController extends Controller
     {
         $validator = Validator::make($request->all(), [
             'user_name' => 'required',
-            'user_phone' => 'required',
+            'user_phone_number' => 'required',
             'user_nickname' => 'required',
-            'user_date_of_birth' => 'required',
-            'user_address' => 'required',
-            'user_profile_picture' => 'required',
             'user_gender' => 'required',
         ]);
+
         if ($validator->fails()) {
             return response()->json($validator->errors(), 400);
         }
+
         $user_id = $this->user_id();
-        $user = User::where('user_id', $user_id);
-        $cek_user = $user->first();
-        if (!$cek_user) {
+        $user = User::where('user_id', $user_id)->first();
+
+        if (!$user) {
             return response()->json(['message' => 'User not found'], 404);
         }
-        $data_user = DataUser::where('user_id', $user_id);
+
+        $data_user = DataUser::where('user_id', $user_id)->first();
+
         $dataUserData = [
             'user_name' => $request->user_name,
-            'user_phone_number' => $request->user_phone,
+            'user_phone_number' => $request->user_phone_number,
             'user_nickname' => $request->user_nickname,
-            'user_date_of_birth' => $request->user_date_of_birth,
-            'user_address' => $request->user_address,
-            'user_profile_picture' => $request->user_profile_picture,
+            'user_address' => $request->user_address ?? null,
             'user_gender' => $request->user_gender,
         ];
-        if ($request->user_password !== null) {
-            $userData['password'] = bcrypt($request->user_password);
-            $user->update($userData);
+        if ($request->hasFile('user_profile_picture')) {
+            $imagePath = $request->file('user_profile_picture')->store('user_profile_picture', 'public');
+            $dataUserData['user_profile_picture'] = env('APP_URL') . '/storage/' . $imagePath;
         }
-        $data_user->update($dataUserData);
+        // return response()->json($dataUserData);
+        DataUser::where('user_id', $user_id)->update($dataUserData);
+        if ($request->user_password !== null) {
+            $user->update(['password' => bcrypt($request->user_password)]);
+        }
         return response()->json(['message' => 'Success update user'], 200);
     }
+
 
     public function register_teacher(Request $request)
     {
@@ -91,7 +91,8 @@ class UserController extends Controller
                 'teacherData.*.gelar' => 'required',
                 'teacherData.*.sekolah' => 'required',
                 'teacherData.*.jurusan' => 'required',
-                'teacherData.*.tahun' => 'required|integer|',
+                'teacherData.*.tahun_masuk' => 'required|date|',
+                'teacherData.*.tahun_lulus' => 'required|date|',
                 'pengalamanData.*.judul' => 'required',
                 'pengalamanData.*.posisi' => 'required',
                 'pengalamanData.*.mulai' => 'required|date',
@@ -125,7 +126,8 @@ class UserController extends Controller
                         'teacher_degree_title' => $education['gelar'],
                         'teacher_university' => $education['sekolah'],
                         'teacher_major' => $education['jurusan'],
-                        'teacher_graduation_year' => $education['tahun'],
+                        'teacher_start_year' => $education['tahun_masuk'],
+                        'teacher_graduation_year' => $education['tahun_lulus'],
                         'created_at' => Carbon::now()->toDateTimeString(),
                     ]);
                 }
@@ -239,5 +241,56 @@ class UserController extends Controller
     {
         $teacher = Teacher::with('dataUser', 'course.rating', 'course.enrollment', 'teacherEducationHistory', 'teacherExperience')->where('teacher_id', $id)->first();
         return response()->json($teacher, 200);
+    }
+
+    public function list_teacher_top()
+    {
+        $teachers = Teacher::with('dataUser', 'course.rating', 'course.enrollment', 'teacherEducationHistory', 'teacherExperience')->get();
+
+        // Menghitung nilai maksimum dari setiap kriteria
+        $maxCourses = $teachers->max(function ($teacher) {
+            return optional($teacher->courses)->count() ?? 0;
+        });
+        $maxEnrollments = $teachers->max(function ($teacher) {
+            return optional($teacher->courses)->sum('enrollments_count') ?? 0;
+        });
+        $maxRating = $teachers->max(function ($teacher) {
+            return optional($teacher->courses)->max('rating') ?? 0;
+        });
+        $maxAvgRating = $teachers->max(function ($teacher) {
+            return optional($teacher->courses)->avg('rating') ?? 0;
+        });
+
+        // Memfilter pengajar berdasarkan kriteria maksimum
+        $filteredTeachers = $teachers->filter(function ($teacher) use ($maxCourses, $maxEnrollments, $maxRating, $maxAvgRating) {
+            $coursesCount = optional($teacher->courses)->count() ?? 0;
+            $enrollmentsMax = optional($teacher->courses)->max('enrollments_count') ?? 0;
+            $ratingMax = optional($teacher->courses)->max('rating') ?? 0;
+            $avgRating = optional($teacher->courses)->avg('rating') ?? 0;
+
+            return $coursesCount == $maxCourses
+                || $enrollmentsMax == $maxEnrollments
+                || $ratingMax == $maxRating
+                || $avgRating == $maxAvgRating;
+        });
+
+        // Ambil 10 pengajar teratas dari hasil filter
+        $topTeachers = $filteredTeachers->take(10);
+
+        // Format data untuk respons JSON
+        $teachersData = $topTeachers->map(function ($teacher) {
+            return [
+                'teacher_id' => $teacher->teacher_id,
+                'name' => $teacher->dataUser->user_name,
+                'profile_picture' => $teacher->dataUser->user_profile_picture,
+                'courses_count' => optional($teacher->courses)->count() ?? 0,
+                'max_enrollments' => optional($teacher->courses)->max('enrollments_count') ?? 0,
+                'max_rating' => optional($teacher->courses)->max('rating') ?? 0,
+                'avg_rating' => optional($teacher->courses)->avg('rating') ?? 0,
+                'education_history' => $teacher->teacherEducationHistory,
+                'experience' => $teacher->teacherExperience,
+            ];
+        });
+        return response()->json($teachersData, 200);
     }
 }

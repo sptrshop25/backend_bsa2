@@ -17,14 +17,15 @@ return new class extends Migration
             $table->foreign('user_id')->references('user_id')->on('users')->onDelete('cascade')->onUpdate('cascade');
             $table->string('course_id', 20);
             $table->foreign('course_id')->references('course_id')->on('courses')->onDelete('cascade')->onUpdate('cascade');
-            $table->integer('transaction_amount');
-            $table->integer('transaction_fee_merchant'); 
-            $table->integer('transaction_fee_customer'); 
-            $table->integer('transaction_total_fee'); 
-            $table->integer('transaction_total_amount'); 
-            $table->string('transaction_reference', 50); 
-            $table->string('transaction_status', 50);
-            $table->string('transaction_method', 50);
+            $table->integer('transaction_amount')->default(0);
+            $table->integer('transaction_fee_merchant')->default(0); 
+            $table->integer('transaction_fee_customer')->default(0); 
+            $table->integer('transaction_total_fee')->default(0); 
+            $table->integer('transaction_total_amount')->default(0); 
+            $table->string('transaction_url_checkout')->nullable();
+            $table->string('transaction_reference', 50)->nullable(); 
+            $table->string('transaction_status', 50)->nullable();
+            $table->string('transaction_method', 50)->nullable();
             $table->timestamps();
         });
     }

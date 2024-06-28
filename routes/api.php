@@ -5,6 +5,7 @@ use App\Http\Controllers\CourseController;
 use App\Http\Controllers\LoginAdminController;
 use App\Http\Controllers\LoginController;
 use App\Http\Controllers\SearchController;
+use App\Http\Controllers\TransactionController;
 use App\Http\Controllers\TripayCallbackController;
 use App\Http\Controllers\UserController;
 use App\Http\Middleware\CheckRequestMethod;
@@ -34,10 +35,10 @@ Route::post('verify_otp', [LoginController::class, 'verify_otp']);
 Route::post('reset_password', [LoginController::class, 'reset_password']);
 Route::post('callback/tripay', [TripayCallbackController::class, 'handleCallback']);
 Route::middleware(['auth.jwt'])->group(function () {
-    Route::post('info_user', [UserController::class, 'info_user']);
+    Route::get('info_user', [UserController::class, 'info_user']);
     Route::get('info_teacher', [UserController::class, 'info_teacher']);
     Route::post('register/teacher', [UserController::class, 'register_teacher']);
-    Route::put('update_user', [UserController::class, 'update_user']);
+    Route::post('update_user', [UserController::class, 'update_user']);
     Route::put('update_teacher', [UserController::class, 'update_teacher']);
     Route::post('create_course', [CourseController::class, 'create_course']);
     Route::get('cek_token', [LoginController::class, 'cek_token']);
@@ -48,7 +49,7 @@ Route::middleware(['auth.jwt'])->group(function () {
     Route::delete('search_history/{id}', [SearchController::class, 'delete_search_history']);
     Route::delete('search_history', [SearchController::class, 'delete_search_history_all']);
     Route::get('teacher/list-my-course', [CourseController::class, 'get_my_courses']);
-    Route::post('buy-course', [CourseController::class, 'transaction_course']);
+    Route::post('buy-course', [TransactionController::class, 'transaction_course']);
     Route::get('detail-course/{course_id}', [CourseController::class, 'detail_course']);
     Route::get('list-category', [CourseController::class, 'list_category']);
     Route::get('list-sub-category', [CourseController::class, 'list_sub_category']);
@@ -59,12 +60,15 @@ Route::middleware(['auth.jwt'])->group(function () {
     Route::get('my-course', [CourseController::class, 'my_course']);
     Route::get('material/{course_id}', [CourseController::class, 'get_material']);
     Route::get('list_materi/{course_id}', [CourseController::class, 'list_materi']);
-    Route::post('transaction', [CourseController::class, 'transaction_free']);
+    Route::post('transaction', [TransactionController::class, 'transaction_free']);
     Route::get('detail-materi/{material_id}', [CourseController::class, 'detail_materi']);
     Route::post('material-mark-finish', [CourseController::class, 'mark_material_finished']);
-    Route::get('my-transaction', [CourseController::class, 'my_transaction']);
+    Route::get('my-transaction', [TransactionController::class, 'my_transaction']);
     Route::get('check_course/{course_id}', [CourseController::class, 'check_course']);
     Route::get('teacher-profile/{user_id}', [UserController::class, 'teacher_profile']);
+    Route::get('detail-transaction/{transaction_id}', [TransactionController::class, 'detail_transaction']);
+    Route::get('list-teacher-top', [UserController::class, 'list_teacher_top']);
+    Route::post('extend-course', [TransactionController::class, 'extend_course']);
 });
 Route::post('admin/login', [LoginAdminController::class, 'login']);
 Route::middleware('admin')->group(function () {
